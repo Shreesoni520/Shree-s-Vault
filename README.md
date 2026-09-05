@@ -10,6 +10,7 @@
 </p>
 
 <p align="center">
+  <a href="https://shree-s-vault.vercel.app"><img alt="Live site" src="https://img.shields.io/badge/Live-shree--s--vault.vercel.app-black?style=for-the-badge" /></a>
   <img alt="Next.js" src="https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=nextdotjs" />
   <img alt="React" src="https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black" />
   <img alt="Tailwind" src="https://img.shields.io/badge/Tailwind-v4-38BDF8?style=for-the-badge&logo=tailwindcss&logoColor=white" />
@@ -28,6 +29,8 @@ You create a username. You pick a currency and what you actually earn. Then you 
 Same username, same password, same numbers — Chrome, Edge, another computer — as long as they hit this app.
 
 Built for one person who wants the books and the kitchen in one quiet place. Not a bank. Not a budget influencer dashboard.
+
+**Live:** [shree-s-vault.vercel.app](https://shree-s-vault.vercel.app)
 
 ---
 

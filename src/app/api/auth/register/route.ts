@@ -39,18 +39,22 @@ export async function POST(request: Request) {
   }
 
   try {
-    const salt = makeSalt();
-    const user = await prisma.user.create({
-      data: {
-        username: key,
-        passwordHash: hashPassword(password, salt),
-        salt,
-        displayName: username,
-      },
+    const user = await prisma.$transaction(async (tx) => {
+      const salt = makeSalt();
+      const created = await tx.user.create({
+        data: {
+          username: key,
+          passwordHash: hashPassword(password, salt),
+          salt,
+          displayName: username,
+        },
+      });
+      await seedUserDefaults(created.id, tx);
+      return created;
     });
-    await seedUserDefaults(user.id);
     return withSession(NextResponse.json({ user: publicUser(user) }), user.username, request);
-  } catch {
+  } catch (error) {
+    console.error(error);
     return NextResponse.json({ error: "Could not create that account. Try again." }, { status: 500 });
   }
 }

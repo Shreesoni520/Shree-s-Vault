@@ -1,6 +1,7 @@
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import type { PrismaClient } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { DEFAULT_CATEGORIES } from "@/lib/defaults";
 import { readSession, SESSION_COOKIE } from "@/lib/session";
@@ -39,8 +40,11 @@ export async function requireUser() {
   return { user, response: null as null };
 }
 
-export async function seedUserDefaults(userId: string) {
-  await prisma.category.createMany({
+export async function seedUserDefaults(
+  userId: string,
+  db: Pick<PrismaClient, "category" | "recipe" | "account"> = prisma
+) {
+  await db.category.createMany({
     data: DEFAULT_CATEGORIES.map((category) => ({
       userId,
       name: category.name,
@@ -48,7 +52,7 @@ export async function seedUserDefaults(userId: string) {
       color: category.color,
     })),
   });
-  await prisma.recipe.create({
+  await db.recipe.create({
     data: {
       userId,
       title: "Overnight oats",
@@ -66,7 +70,7 @@ export async function seedUserDefaults(userId: string) {
       },
     },
   });
-  await prisma.recipe.create({
+  await db.recipe.create({
     data: {
       userId,
       title: "Tomato pasta",
@@ -86,10 +90,10 @@ export async function seedUserDefaults(userId: string) {
     },
   });
 
-  await prisma.account.create({
+  await db.account.create({
     data: { userId, name: "Everyday", type: "current" },
   });
-  await prisma.account.create({
+  await db.account.create({
     data: { userId, name: "Savings", type: "savings" },
   });
 }

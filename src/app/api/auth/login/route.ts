@@ -30,7 +30,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Wrong password." }, { status: 401 });
     }
     return withSession(NextResponse.json({ user: publicUser(user) }), user.username, request);
-  } catch {
+  } catch (error) {
+    console.error(error);
     return NextResponse.json({ error: "Could not sign in. Try again." }, { status: 500 });
   }
 }
