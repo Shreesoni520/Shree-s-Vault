@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/context/auth-context";
 import { CURRENCIES, moneySymbol } from "@/lib/currency";
 import { HOUSEHOLD_BILLS } from "@/lib/household";
+import { formatMoney, poundsToCents } from "@/lib/money";
 import { cn } from "@/lib/utils";
 
 const STEPS = ["Currency", "Pay", "Cash", "Bills", "Goal"] as const;
@@ -23,6 +24,9 @@ export function Onboarding() {
   const [bills, setBills] = useState({ rent: "", light: "", water: "", internet: "" });
   const [saving, setSaving] = useState(false);
   const symbol = moneySymbol(currency);
+  const payCents = poundsToCents(salary) ?? 0;
+  const billsCents = HOUSEHOLD_BILLS.reduce((total, bill) => total + (poundsToCents(bills[bill.key]) ?? 0), 0);
+  const leftoverCents = payCents - billsCents;
 
   async function finish() {
     setSaving(true);
@@ -179,6 +183,26 @@ export function Onboarding() {
             <div>
               <h2 className="font-heading text-2xl">How much to keep?</h2>
               <p className="text-muted-foreground mt-1 text-sm">Optional leftover goal each month.</p>
+              <div className="mt-5 rounded-2xl border border-white/10 bg-background/50 px-4 py-4">
+                <p className="text-muted-foreground text-xs tracking-[0.16em] uppercase">Left after bills</p>
+                <p className={cn("font-heading mt-1 text-3xl tracking-tight", leftoverCents < 0 && "text-destructive")}>
+                  {formatMoney(leftoverCents, currency)}
+                </p>
+                <p className="text-muted-foreground mt-2 text-sm leading-6">
+                  {formatMoney(payCents, currency)} pay
+                  {billsCents > 0 ? ` minus ${formatMoney(billsCents, currency)} bills` : ", no bills typed"}.
+                  That is what is left this month to spend or save.
+                </p>
+                {leftoverCents > 0 ? (
+                  <button
+                    type="button"
+                    className="text-foreground mt-3 text-sm font-medium underline-offset-4 hover:underline"
+                    onClick={() => setLeftoverGoal(String(leftoverCents / 100))}
+                  >
+                    Use this as my goal
+                  </button>
+                ) : null}
+              </div>
               <Label className="mt-5">Monthly leftover goal</Label>
               <div className="relative mt-2">
                 <span className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 -translate-y-1/2">
