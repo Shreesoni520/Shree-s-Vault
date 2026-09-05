@@ -49,7 +49,7 @@ export function Select({
         aria-expanded={open}
         aria-controls={listId}
         onClick={() => setOpen((current) => !current)}
-        className="flex h-8 w-full items-center justify-between gap-2 rounded-lg border border-input bg-transparent px-2.5 text-left text-sm outline-none transition-colors hover:bg-muted/40 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
+        className="flex h-8 w-full items-center justify-between gap-2 rounded-lg border border-input bg-transparent px-2.5 text-left text-sm outline-none transition-colors hover:bg-muted/40 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:border-white/20 dark:bg-input/40"
       >
         <span className={cn("truncate", !selected && "text-muted-foreground")}>
           {selected?.label ?? placeholder}
@@ -61,7 +61,7 @@ export function Select({
           id={listId}
           role="listbox"
           className={cn(
-            "absolute z-[400] mt-1 max-h-56 min-w-full overflow-auto rounded-xl border bg-popover p-1 shadow-lg ring-1 ring-foreground/10",
+            "absolute z-[400] mt-1 max-h-56 min-w-full overflow-auto rounded-xl border border-border bg-popover p-1 text-popover-foreground shadow-[0_16px_40px_rgba(0,0,0,0.45)] ring-1 ring-foreground/15 dark:border-white/25 dark:bg-[#161622] dark:shadow-[0_16px_48px_rgba(0,0,0,0.65)] dark:ring-white/10",
             align === "end" && "right-0"
           )}
         >
