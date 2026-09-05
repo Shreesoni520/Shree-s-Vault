@@ -1,0 +1,155 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String         @id @default(cuid())
+  username          String         @unique
+  passwordHash      String
+  salt              String
+  displayName       String
+  leftoverGoalCents Int            @default(0)
+  currency          String         @default("GBP")
+  salaryCents       Int            @default(0)
+  onboarded         Boolean        @default(false)
+  avatar            String         @default("")
+  createdAt         DateTime       @default(now())
+  categories        Category[]
+  transactions      Transaction[]
+  budgets           Budget[]
+  recipes           Recipe[]
+  groceryItems      GroceryItem[]
+  mealSlots         MealSlot[]
+  accounts          Account[]
+  goals             Goal[]
+}
+
+model Account {
+  id           String        @id @default(cuid())
+  userId       String
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name         String
+  type         String        @default("current")
+  openingCents Int           @default(0)
+  archived     Boolean       @default(false)
+  createdAt    DateTime      @default(now())
+  outgoing     Transaction[] @relation("FromAccount")
+  incoming     Transaction[] @relation("ToAccount")
+}
+
+model Goal {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  targetCents Int
+  savedCents  Int      @default(0)
+  deadline    String   @default("")
+  createdAt   DateTime @default(now())
+}
+
+model Category {
+  id           String         @id @default(cuid())
+  userId       String
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name         String
+  kind         String
+  color        String
+  createdAt    DateTime       @default(now())
+  transactions Transaction[]
+  budgets      Budget[]
+
+  @@unique([userId, name, kind])
+}
+
+model Transaction {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categoryId  String?
+  category    Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  accountId   String?
+  account     Account?  @relation("FromAccount", fields: [accountId], references: [id], onDelete: SetNull)
+  toAccountId String?
+  toAccount   Account?  @relation("ToAccount", fields: [toAccountId], references: [id], onDelete: SetNull)
+  amountCents Int
+  kind        String
+  date        String
+  note        String    @default("")
+  merchant    String    @default("")
+  recurring   Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+
+  @@index([userId, date])
+  @@index([userId, kind])
+}
+
+model Budget {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  month      String
+  amountCents Int
+
+  @@unique([userId, categoryId, month])
+}
+
+model Recipe {
+  id           String       @id @default(cuid())
+  userId       String
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title        String
+  servings     Int          @default(2)
+  minutes      Int          @default(30)
+  notes        String        @default("")
+  tags         String       @default("")
+  sourceUrl    String       @default("")
+  favorite     Boolean      @default(false)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  ingredients  Ingredient[]
+  mealSlots    MealSlot[]
+}
+
+model Ingredient {
+  id        String  @id @default(cuid())
+  recipeId  String
+  recipe    Recipe  @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  name      String
+  quantity  Float
+  unit      String  @default("")
+  aisle     String  @default("Other")
+  sortOrder Int     @default(0)
+}
+
+model GroceryItem {
+  id          String  @id @default(cuid())
+  userId      String
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  quantity    Float
+  unit        String  @default("")
+  aisle       String  @default("Other")
+  done        Boolean @default(false)
+  recipeTitle String  @default("")
+  estimateCents Int    @default(0)
+  createdAt   DateTime @default(now())
+}
+
+model MealSlot {
+  id        String @id @default(cuid())
+  userId    String
+  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date      String
+  recipeId  String
+  recipe    Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+}
