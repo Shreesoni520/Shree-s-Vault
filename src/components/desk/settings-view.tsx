@@ -1,13 +1,14 @@
 "use client";
 
 import { useRef, useState, type ReactNode } from "react";
-import { Camera } from "lucide-react";
+import { Camera, Download } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { UserAvatar } from "@/components/user-avatar";
+import { downloadExport } from "@/lib/client";
 import { useAuth } from "@/context/auth-context";
 import { useMoney } from "@/hooks/use-money";
 import { CURRENCIES } from "@/lib/currency";
@@ -163,6 +164,43 @@ export function SettingsView() {
               Save
             </Button>
           </div>
+        </div>
+      </section>
+
+      <section className="desk-in">
+        <p className="text-muted-foreground mb-1 text-xs tracking-[0.18em] uppercase">Export</p>
+        <p className="text-muted-foreground mb-3 text-sm">CSV files Excel can open. Ledger matches Import.</p>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            onClick={() => {
+              void downloadExport("ledger")
+                .then(() => toast.success("Ledger downloaded"))
+                .catch((error) => toast.error(error instanceof Error ? error.message : "Could not export"));
+            }}
+          >
+            <Download /> Ledger
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => {
+              void downloadExport("grocery")
+                .then(() => toast.success("Grocery downloaded"))
+                .catch((error) => toast.error(error instanceof Error ? error.message : "Could not export"));
+            }}
+          >
+            <Download /> Grocery
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => {
+              void downloadExport("accounts")
+                .then(() => toast.success("Accounts downloaded"))
+                .catch((error) => toast.error(error instanceof Error ? error.message : "Could not export"));
+            }}
+          >
+            <Download /> Accounts
+          </Button>
         </div>
       </section>
 

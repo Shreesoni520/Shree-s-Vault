@@ -2,12 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Plus, Trash2 } from "lucide-react";
+import { Download, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { api, type GroceryItem } from "@/lib/client";
+import { api, downloadExport, type GroceryItem } from "@/lib/client";
 import { centsToPounds, poundsToCents } from "@/lib/money";
 import { useMoney } from "@/hooks/use-money";
 
@@ -107,15 +107,30 @@ export function GroceryView() {
           <p className="text-muted-foreground text-sm">Monthly buys · tick when you get them</p>
           <h1 className="font-heading mt-1 text-4xl tracking-tight">Grocery</h1>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          className="border-border dark:border-white/20"
-          onClick={() => void resetMonth()}
-          disabled={!items.some((item) => item.done)}
-        >
-          Clear ticked
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="border-border dark:border-white/20"
+            onClick={() => {
+              void downloadExport("grocery")
+                .then(() => toast.success("Grocery list downloaded"))
+                .catch((error) => toast.error(error instanceof Error ? error.message : "Could not export"));
+            }}
+            disabled={items.length === 0}
+          >
+            <Download /> Export
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="border-border dark:border-white/20"
+            onClick={() => void resetMonth()}
+            disabled={!items.some((item) => item.done)}
+          >
+            Clear ticked
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">

@@ -2,14 +2,14 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { PiggyBank, Plus, Trash2 } from "lucide-react";
+import { Download, PiggyBank, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { AccountSheet } from "@/components/desk/account-sheet";
-import { api, type Account, type Goal } from "@/lib/client";
+import { api, downloadExport, type Account, type Goal } from "@/lib/client";
 import { centsToPounds, poundsToCents } from "@/lib/money";
 import { useMoney } from "@/hooks/use-money";
 
@@ -114,9 +114,22 @@ export function PotsView() {
 
   return (
     <div className="page-in mx-auto flex w-full min-w-0 max-w-6xl flex-col gap-6 px-4 py-6 md:px-6 lg:px-8 lg:py-8">
-      <div>
-        <p className="text-muted-foreground text-sm">Cash across accounts · {money(cash)} available</p>
-        <h1 className="font-heading mt-1 text-4xl tracking-tight">Accounts</h1>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p className="text-muted-foreground text-sm">Cash across accounts · {money(cash)} available</p>
+          <h1 className="font-heading mt-1 text-4xl tracking-tight">Accounts</h1>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            void downloadExport("accounts")
+              .then(() => toast.success("Accounts downloaded"))
+              .catch((error) => toast.error(error instanceof Error ? error.message : "Could not export"));
+          }}
+        >
+          <Download /> Export
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">

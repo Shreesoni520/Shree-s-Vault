@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Copy, Download, Plus, Repeat, Search, Trash2, Upload } from "lucide-react";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input, Textarea } from "@/components/ui/input";
@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { KindPills, Select } from "@/components/ui/select";
 import { MonthNav } from "@/components/desk/month-nav";
-import { api, type Account, type Budget, type Category, type Transaction } from "@/lib/client";
+import { api, downloadExport, type Account, type Budget, type Category, type Transaction } from "@/lib/client";
 import { SAMPLE_CSV } from "@/lib/csv";
 import { CATEGORY_COLORS } from "@/lib/defaults";
 import { useDebounced } from "@/hooks/use-debounced";
@@ -34,6 +34,8 @@ export function LedgerView() {
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [open, setOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [csvText, setCsvText] = useState(SAMPLE_CSV);
   const [editing, setEditing] = useState<Transaction | null>(null);
   const [budgetAmount, setBudgetAmount] = useState("");
@@ -215,9 +217,9 @@ export function LedgerView() {
           <Button variant="outline" onClick={() => setImportOpen(true)}>
             <Upload /> Import CSV
           </Button>
-          <a href="/api/export" className={cn(buttonVariants({ variant: "outline" }))}>
+          <Button variant="outline" onClick={() => setExportOpen(true)}>
             <Download /> Export
-          </a>
+          </Button>
           <Button
             onClick={() => {
               setEditing(null);
@@ -433,12 +435,64 @@ export function LedgerView() {
         }}
       />
 
+      <Dialog open={exportOpen} onOpenChange={setExportOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Export ledger</DialogTitle>
+            <DialogDescription>
+              Downloads a CSV Excel can open. Same columns as Import, plus account and whether it repeats each month.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="sm:justify-between">
+            <Button
+              variant="outline"
+              disabled={exporting}
+              onClick={() => {
+                void (async () => {
+                  setExporting(true);
+                  try {
+                    await downloadExport("ledger", month);
+                    setExportOpen(false);
+                    toast.success("Downloaded this month");
+                  } catch (error) {
+                    toast.error(error instanceof Error ? error.message : "Could not export");
+                  } finally {
+                    setExporting(false);
+                  }
+                })();
+              }}
+            >
+              This month
+            </Button>
+            <Button
+              disabled={exporting}
+              onClick={() => {
+                void (async () => {
+                  setExporting(true);
+                  try {
+                    await downloadExport("ledger");
+                    setExportOpen(false);
+                    toast.success("Downloaded every month");
+                  } catch (error) {
+                    toast.error(error instanceof Error ? error.message : "Could not export");
+                  } finally {
+                    setExporting(false);
+                  }
+                })();
+              }}
+            >
+              All months
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={importOpen} onOpenChange={setImportOpen}>
         <DialogContent className="sm:max-w-xl">
           <DialogHeader>
             <DialogTitle>Import CSV</DialogTitle>
             <DialogDescription>
-              Headers can be date, amount, kind, category, merchant, note. Dates like 2026-09-01 or 01/09/2026.
+              Same shape as Export: date, amount, kind, category, merchant, note. Dates like 2026-09-01 or 01/09/2026.
             </DialogDescription>
           </DialogHeader>
           <Textarea value={csvText} onChange={(event) => setCsvText(event.target.value)} className="min-h-56 font-mono text-xs" />

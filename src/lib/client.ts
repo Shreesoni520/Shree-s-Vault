@@ -7,6 +7,20 @@ export async function readError(response: Response) {
   }
 }
 
+export async function downloadExport(kind: "ledger" | "grocery" | "accounts", month?: string) {
+  const query = new URLSearchParams({ kind });
+  if (month) query.set("month", month);
+  const response = await fetch(`/api/export?${query}`, { credentials: "include" });
+  if (!response.ok) throw new Error(await readError(response));
+  const blob = await response.blob();
+  const match = response.headers.get("Content-Disposition")?.match(/filename="([^"]+)"/);
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = match?.[1] ?? `shreevault-${kind}.csv`;
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
+
 export async function api<T>(url: string, options?: RequestInit): Promise<T> {
   const response = await fetch(url, {
     credentials: "include",

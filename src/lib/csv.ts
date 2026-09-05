@@ -125,3 +125,14 @@ export const SAMPLE_CSV = `date,amount,kind,category,merchant,note
 2026-09-04,12.50,expense,Eating out,Cafe Nero,Coffee
 2026-09-06,45.00,expense,Transport,Trainline,Return ticket
 `;
+
+export function csvCell(value: string | number | boolean) {
+  const text = String(value);
+  if (/[",\n\r]/.test(text)) return `"${text.replace(/"/g, '""')}"`;
+  return text;
+}
+
+export function toCsv(headers: string[], rows: Array<Array<string | number | boolean>>) {
+  const lines = [headers.map(csvCell).join(","), ...rows.map((row) => row.map(csvCell).join(","))];
+  return `\uFEFF${lines.join("\r\n")}\r\n`;
+}
