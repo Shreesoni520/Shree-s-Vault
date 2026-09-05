@@ -98,17 +98,22 @@ export async function GET(request: Request) {
   if (spendDelta !== null && spendDelta < 0) insights.push({ tone: "good", text: `Spend is ${Math.abs(spendDelta)}% lower than last month.` });
   if (spendDelta !== null && spendDelta > 8) insights.push({ tone: "warn", text: `Spend is ${spendDelta}% higher than last month.` });
   if (spend > 0 && eatingOut / spend >= 0.25) insights.push({ tone: "info", text: "Eating out is over a quarter of spend." });
-  if (user.leftoverGoalCents && saved >= user.leftoverGoalCents) insights.push({ tone: "good", text: "You hit this month’s leftover goal." });
+  if (user.leftoverGoalCents && saved >= user.leftoverGoalCents) {
+    insights.push({
+      tone: "good",
+      text: `Income minus spend is ${formatMoney(saved, user.currency)} — that’s already at your leftover goal of ${formatMoney(user.leftoverGoalCents, user.currency)}.`,
+    });
+  }
   if (user.leftoverGoalCents && saved < user.leftoverGoalCents) {
     insights.push({
       tone: "info",
-      text: `${formatMoney(user.leftoverGoalCents - saved, user.currency)} still to keep for your leftover goal.`,
+      text: `Leftover is income minus spend. You have ${formatMoney(saved, user.currency)} so far; ${formatMoney(user.leftoverGoalCents - saved, user.currency)} more to hit your ${formatMoney(user.leftoverGoalCents, user.currency)} goal.`,
     });
   }
   if (projectedSpend > spend * 1.15 && spend > 0) {
     insights.push({
       tone: "info",
-      text: `At this pace, spend lands around ${formatMoney(projectedSpend, user.currency)} this month.`,
+      text: `You’ve spent ${formatMoney(spend, user.currency)} in ${elapsed} day${elapsed === 1 ? "" : "s"}. If that daily pace keeps up, the whole month may reach about ${formatMoney(projectedSpend, user.currency)}.`,
     });
   }
   if (billsDue) insights.push({ tone: "warn", text: `${billsDue} repeating bill${billsDue === 1 ? "" : "s"} not posted yet.` });
