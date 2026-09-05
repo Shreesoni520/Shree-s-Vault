@@ -56,7 +56,8 @@ export function HouseholdBillsDialog({
         <DialogHeader>
           <DialogTitle>Household bills</DialogTitle>
           <DialogDescription>
-            These amounts run every month. Type 700 for rent and we add 700 each month. Leave blank to skip a bill.
+            Amounts are for the whole month. Rent 700 means 700 once this month, then 700 again next month — not every
+            week. Leave blank to skip a bill.
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-3">

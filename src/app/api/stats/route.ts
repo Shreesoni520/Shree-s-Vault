@@ -4,7 +4,7 @@ import { requireUser } from "@/lib/auth";
 import { daysElapsedInMonth, daysInMonth, formatMoney, lastNMonths, monthKey, monthShort, weekDates } from "@/lib/money";
 import { categoryTotals, incomeOf, monthlySeries, spendOf, sumCents } from "@/lib/stats";
 import { ensureEverydayAccount, withBalances } from "@/lib/accounts";
-import { ensureRecurringForMonth, recurringKey } from "@/lib/recurring";
+import { ensureRecurringForMonth, monthlyBillKey } from "@/lib/recurring";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -44,9 +44,12 @@ export async function GET(request: Request) {
 
   const elapsed = daysElapsedInMonth(month);
   const length = daysInMonth(month);
-  const dailySpend = Math.round(spend / elapsed);
-  const projectedSpend = dailySpend * length;
   const remainingDays = Math.max(0, length - elapsed);
+  const monthExpenses = thisMonth.filter((row) => row.kind === "expense");
+  const fixedSpend = spendOf(monthExpenses.filter((row) => row.recurring));
+  const everydaySpend = spend - fixedSpend;
+  const dailySpend = elapsed > 0 ? Math.round(everydaySpend / elapsed) : 0;
+  const projectedSpend = fixedSpend + dailySpend * length;
 
   const budgetRows = budgets.map((budget) => {
     const used = spendOf(
@@ -70,18 +73,18 @@ export async function GET(request: Request) {
   const seen = new Set<string>();
   const uniqueBills = [];
   for (const row of templates) {
-    const key = recurringKey(row);
+    const key = monthlyBillKey(row);
     if (seen.has(key)) continue;
     seen.add(key);
     uniqueBills.push(row);
   }
-  const monthKeys = new Set(thisMonth.map((row) => recurringKey(row)));
+  const monthKeys = new Set(thisMonth.map((row) => monthlyBillKey(row)));
   const bills = uniqueBills.map((row) => ({
     id: row.id,
     merchant: row.merchant || row.note || (row.kind === "income" ? "Income" : "Bill"),
     amountCents: row.amountCents,
     kind: row.kind,
-    posted: monthKeys.has(recurringKey(row)),
+    posted: monthKeys.has(monthlyBillKey(row)),
     day: Number(row.date.slice(8, 10)) || 1,
   }));
   const billsDue = bills.filter((row) => !row.posted && row.kind === "expense").length;
@@ -112,10 +115,23 @@ export async function GET(request: Request) {
       text: `Leftover is income minus spend. You have ${formatMoney(saved, user.currency)} so far; ${formatMoney(user.leftoverGoalCents - saved, user.currency)} more to hit your ${formatMoney(user.leftoverGoalCents, user.currency)} goal.`,
     });
   }
-  if (projectedSpend > spend * 1.15 && spend > 0) {
+  if (fixedSpend > 0) {
+    const postedBills = monthExpenses
+      .filter((row) => row.recurring)
+      .map((row) => ({
+        name: row.merchant.trim() || row.note.trim() || "Bill",
+        amount: formatMoney(row.amountCents, user.currency),
+      }));
+    const billList =
+      postedBills.length === 1
+        ? `${postedBills[0].name} is ${postedBills[0].amount}`
+        : postedBills.map((row) => `${row.name} ${row.amount}`).join(", ");
     insights.push({
       tone: "info",
-      text: `You’ve spent ${formatMoney(spend, user.currency)} in ${elapsed} day${elapsed === 1 ? "" : "s"}. If that daily pace keeps up, the whole month may reach about ${formatMoney(projectedSpend, user.currency)}.`,
+      text:
+        postedBills.length === 1
+          ? `${billList} for this whole month — once, not weekly. It will not be added again until next month.${everydaySpend > 0 ? ` Extra spend besides that: ${formatMoney(everydaySpend, user.currency)}.` : ""}`
+          : `These bills are for the whole month, once each — not weekly: ${billList}.${everydaySpend > 0 ? ` Extra spend besides bills: ${formatMoney(everydaySpend, user.currency)}.` : ""}`,
     });
   }
   if (billsDue) insights.push({ tone: "warn", text: `${billsDue} repeating bill${billsDue === 1 ? "" : "s"} not posted yet.` });
@@ -129,6 +145,7 @@ export async function GET(request: Request) {
     rate,
     spendDelta,
     leftoverGoalCents: user.leftoverGoalCents,
+    everydaySpend,
     uncategorised,
     dailySpend,
     projectedSpend,

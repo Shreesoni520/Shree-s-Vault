@@ -11,6 +11,11 @@ export function recurringKey(row: {
   return [row.kind, row.amountCents, row.categoryId ?? "", row.merchant.trim().toLowerCase(), row.note.trim().toLowerCase()].join("|");
 }
 
+/** One rent / pay / bill per month — never weekly. */
+export function monthlyBillKey(row: { kind: string; merchant: string }) {
+  return `${row.kind}|${row.merchant.trim().toLowerCase()}`;
+}
+
 export async function ensureRecurringForMonth(userId: string, month: string) {
   const templates = await prisma.transaction.findMany({
     where: { userId, recurring: true },
@@ -20,7 +25,7 @@ export async function ensureRecurringForMonth(userId: string, month: string) {
   const seen = new Set<string>();
   const unique = [];
   for (const row of templates) {
-    const key = recurringKey(row);
+    const key = monthlyBillKey(row);
     if (seen.has(key)) continue;
     seen.add(key);
     unique.push(row);
@@ -30,10 +35,12 @@ export async function ensureRecurringForMonth(userId: string, month: string) {
     where: { userId, date: { startsWith: month } },
   });
   const existingKeys = new Set(existing.map((row) => recurringKey(row)));
+  const existingBills = new Set(existing.map((row) => monthlyBillKey(row)));
 
   let posted = 0;
   for (const row of unique) {
     if (existingKeys.has(recurringKey(row))) continue;
+    if (existingBills.has(monthlyBillKey(row))) continue;
     await prisma.transaction.create({
       data: {
         userId,

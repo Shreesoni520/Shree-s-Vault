@@ -37,8 +37,6 @@ export function Onboarding() {
     return {
       saveCents: cappedSave,
       spendCents,
-      weekCents: Math.round(spendCents / 4),
-      dayCents: Math.round(spendCents / 30),
     };
   }, [leftoverAfterBills.leftCents, leftoverGoal]);
 
@@ -168,8 +166,8 @@ export function Onboarding() {
             <div>
               <h2 className="font-heading text-2xl">Household bills?</h2>
               <p className="text-muted-foreground mt-1 text-sm">
-                These are monthly. If rent is 700, we put 700 on every month until you change it. Leave blank to skip a
-                bill.
+                Type the amount for the whole month. Rent 700 means 700 once this month, then 700 again next month — not
+                every week. Leave blank to skip a bill.
               </p>
               <div className="mt-5 flex flex-col gap-3">
                 {HOUSEHOLD_BILLS.map((bill) => (
@@ -227,7 +225,7 @@ export function Onboarding() {
               </div>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 <div className="rounded-2xl border border-primary/25 bg-primary/10 px-4 py-3">
-                  <p className="text-muted-foreground text-xs tracking-[0.18em] uppercase">Everyday spend</p>
+                  <p className="text-muted-foreground text-xs tracking-[0.18em] uppercase">Everyday this month</p>
                   <p className="font-heading mt-1 text-2xl tracking-tight">
                     {formatMoney(savePlan.spendCents, currency)}
                   </p>
@@ -236,12 +234,12 @@ export function Onboarding() {
                   </p>
                 </div>
                 <div className="rounded-2xl border border-white/10 bg-background/40 px-4 py-3">
-                  <p className="text-muted-foreground text-xs tracking-[0.18em] uppercase">About per week</p>
+                  <p className="text-muted-foreground text-xs tracking-[0.18em] uppercase">Keep this month</p>
                   <p className="font-heading mt-1 text-2xl tracking-tight">
-                    {formatMoney(savePlan.weekCents, currency)}
+                    {formatMoney(savePlan.saveCents, currency)}
                   </p>
                   <p className="text-muted-foreground mt-1 text-xs leading-5">
-                    Roughly {formatMoney(savePlan.dayCents, currency)} a day
+                    The leftover goal you typed above
                   </p>
                 </div>
               </div>

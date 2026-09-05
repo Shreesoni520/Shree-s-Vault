@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { monthKey } from "@/lib/money";
-import { ensureRecurringForMonth, recurringKey } from "@/lib/recurring";
+import { ensureRecurringForMonth, monthlyBillKey } from "@/lib/recurring";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     const existing = await prisma.transaction.findMany({
       where: { userId: user.id, date: { startsWith: month } },
     });
-    if (existing.some((row) => recurringKey(row) === recurringKey(template))) {
+    if (existing.some((row) => monthlyBillKey(row) === monthlyBillKey(template))) {
       return NextResponse.json({ posted: 0 });
     }
   }

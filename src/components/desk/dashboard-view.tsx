@@ -78,7 +78,7 @@ export function DashboardView({
             {loading && !stats ? "…" : money(stats?.cash ?? 0)}
           </p>
           <p className="text-muted-foreground mt-1 text-sm">
-            Across every account · this week {loading && !stats ? "…" : money(stats?.weekSpend ?? 0)} out
+            Across every account · this month {loading && !stats ? "…" : money(stats?.spend ?? 0)} out
           </p>
         </div>
         <MonthNav month={month} onChange={setMonth} />
@@ -117,9 +117,9 @@ export function DashboardView({
           tone={(stats?.saved ?? 0) >= 0 ? "good" : "warn"}
         />
         <StatCard
-          label="This week"
-          value={money(stats?.weekSpend ?? 0)}
-          hint={`In ${money(stats?.weekIncome ?? 0)}`}
+          label="Everyday out"
+          value={money(stats?.everydaySpend ?? 0)}
+          hint="Bills counted once this month"
         />
       </div>
 

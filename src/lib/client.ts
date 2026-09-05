@@ -98,6 +98,7 @@ export type DeskStats = {
   spendDelta: number | null;
   leftoverGoalCents: number;
   uncategorised: number;
+  everydaySpend: number;
   dailySpend: number;
   projectedSpend: number;
   remainingDays: number;

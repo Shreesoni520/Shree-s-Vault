@@ -222,8 +222,10 @@ export function QuickMoneyDialog({
             <label className="flex items-start gap-2.5 rounded-xl border border-border px-3 py-2.5 text-sm dark:border-white/15">
               <Checkbox checked={recurring} onChange={setRecurring} />
               <span>
-                <span className="block font-medium">Repeats every month</span>
-                <span className="text-muted-foreground text-xs">Use this for rent, salary, or a bill that comes every month.</span>
+                <span className="block font-medium">Repeats once every month</span>
+                <span className="text-muted-foreground text-xs">
+                  The amount you type is for the whole month — not weekly. Rent 700 stays 700 until next month.
+                </span>
               </span>
             </label>
           )}
