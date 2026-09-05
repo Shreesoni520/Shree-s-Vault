@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { LogoMark, Wordmark } from "@/components/logo";
@@ -24,9 +24,11 @@ export function Onboarding() {
   const [bills, setBills] = useState({ rent: "", light: "", water: "", internet: "" });
   const [saving, setSaving] = useState(false);
   const symbol = moneySymbol(currency);
-  const payCents = poundsToCents(salary) ?? 0;
-  const billsCents = HOUSEHOLD_BILLS.reduce((total, bill) => total + (poundsToCents(bills[bill.key]) ?? 0), 0);
-  const leftoverCents = payCents - billsCents;
+  const leftoverAfterBills = useMemo(() => {
+    const payCents = poundsToCents(salary) ?? 0;
+    const billCents = HOUSEHOLD_BILLS.reduce((sum, bill) => sum + (poundsToCents(bills[bill.key]) ?? 0), 0);
+    return { payCents, billCents, leftCents: payCents - billCents };
+  }, [salary, bills]);
 
   async function finish() {
     setSaving(true);
@@ -182,28 +184,21 @@ export function Onboarding() {
           {step === 4 && (
             <div>
               <h2 className="font-heading text-2xl">How much to keep?</h2>
-              <p className="text-muted-foreground mt-1 text-sm">Optional leftover goal each month.</p>
-              <div className="mt-5 rounded-2xl border border-white/10 bg-background/50 px-4 py-4">
-                <p className="text-muted-foreground text-xs tracking-[0.16em] uppercase">Left after bills</p>
-                <p className={cn("font-heading mt-1 text-3xl tracking-tight", leftoverCents < 0 && "text-destructive")}>
-                  {formatMoney(leftoverCents, currency)}
+              <p className="text-muted-foreground mt-1 text-sm">
+                After your pay and the bills you typed, this is left this month. Use it to think about saving.
+              </p>
+              <div className="mt-5 rounded-2xl border border-white/10 bg-background/40 px-4 py-4">
+                <p className="text-muted-foreground text-xs tracking-[0.18em] uppercase">Left after bills</p>
+                <p className="font-heading mt-1 text-3xl tracking-tight">
+                  {formatMoney(leftoverAfterBills.leftCents, currency)}
                 </p>
-                <p className="text-muted-foreground mt-2 text-sm leading-6">
-                  {formatMoney(payCents, currency)} pay
-                  {billsCents > 0 ? ` minus ${formatMoney(billsCents, currency)} bills` : ", no bills typed"}.
-                  That is what is left this month to spend or save.
+                <p className="text-muted-foreground mt-2 text-xs leading-5">
+                  Pay {formatMoney(leftoverAfterBills.payCents, currency)} − bills{" "}
+                  {formatMoney(leftoverAfterBills.billCents, currency)}
                 </p>
-                {leftoverCents > 0 ? (
-                  <button
-                    type="button"
-                    className="text-foreground mt-3 text-sm font-medium underline-offset-4 hover:underline"
-                    onClick={() => setLeftoverGoal(String(leftoverCents / 100))}
-                  >
-                    Use this as my goal
-                  </button>
-                ) : null}
               </div>
               <Label className="mt-5">Monthly leftover goal</Label>
+              <p className="text-muted-foreground mt-1 text-xs">Optional. How much of that leftover you want to keep.</p>
               <div className="relative mt-2">
                 <span className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 -translate-y-1/2">
                   {symbol}
