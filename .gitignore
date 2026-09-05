@@ -24,3 +24,7 @@ next-env.d.ts
 /prisma/*.db
 /prisma/*.db-journal
 /prisma/dev.db
+.agents/
+AGENTS.md
+CLAUDE.md
+skills-lock.json
