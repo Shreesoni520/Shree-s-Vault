@@ -2,9 +2,10 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { publicUser, requireUser } from "@/lib/auth";
 import { isCurrency } from "@/lib/currency";
-import { poundsToCents, todayKey } from "@/lib/money";
+import { monthKey, poundsToCents, todayKey } from "@/lib/money";
 import { clearExampleActivity, upsertHouseholdBills } from "@/lib/bills";
 import { ensureEverydayAccount } from "@/lib/accounts";
+import { ensureRecurringForMonth } from "@/lib/recurring";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -97,6 +98,7 @@ export async function POST(request: Request) {
     water: body.water,
     internet: body.internet,
   });
+  await ensureRecurringForMonth(user.id, monthKey());
 
   const updated = await prisma.user.update({
     where: { id: user.id },

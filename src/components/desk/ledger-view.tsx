@@ -728,7 +728,7 @@ function LineDialog({
           </div>
           <label className="col-span-2 flex items-center gap-2 text-sm">
             <Checkbox checked={recurring} onChange={setRecurring} />
-            Repeats monthly — use Post repeats on the new month
+            Repeats every month — we add it again when the next month starts
           </label>
         </div>
         <DialogFooter>

@@ -56,7 +56,7 @@ export function HouseholdBillsDialog({
         <DialogHeader>
           <DialogTitle>Household bills</DialogTitle>
           <DialogDescription>
-            Rent, light, water, internet. Change a number when the price goes up. Leave blank to skip that bill.
+            These amounts run every month. Type 700 for rent and we add 700 each month. Leave blank to skip a bill.
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-3">

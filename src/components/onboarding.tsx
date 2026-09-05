@@ -126,7 +126,7 @@ export function Onboarding() {
             <div>
               <h2 className="font-heading text-2xl">What do you get paid?</h2>
               <p className="text-muted-foreground mt-1 text-sm">
-                Monthly take-home. Leave blank to add pay later. This becomes repeating income you can edit any time.
+                Monthly take-home. If you type 1000, we add 1000 income every month. Leave blank to add it later.
               </p>
               <Label className="mt-5">Monthly pay</Label>
               <div className="relative mt-2">
@@ -168,8 +168,8 @@ export function Onboarding() {
             <div>
               <h2 className="font-heading text-2xl">Household bills?</h2>
               <p className="text-muted-foreground mt-1 text-sm">
-                Only fill what you actually pay. Leave blank if you do not have that bill. You can change the amount
-                later when the price goes up.
+                These are monthly. If rent is 700, we put 700 on every month until you change it. Leave blank to skip a
+                bill.
               </p>
               <div className="mt-5 flex flex-col gap-3">
                 {HOUSEHOLD_BILLS.map((bill) => (

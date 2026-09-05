@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
+import { monthKey } from "@/lib/money";
+import { ensureRecurringForMonth } from "@/lib/recurring";
 import { parseAmount, parseKind, resolveAccounts } from "@/lib/transactions";
 
 export const runtime = "nodejs";
@@ -11,6 +13,8 @@ export async function GET(request: Request) {
   if (!user) return response;
   const url = new URL(request.url);
   const month = url.searchParams.get("month");
+  if (month) await ensureRecurringForMonth(user.id, month);
+  else await ensureRecurringForMonth(user.id, monthKey());
   const q = url.searchParams.get("q")?.trim().toLowerCase() ?? "";
   const kind = url.searchParams.get("kind");
   const categoryId = url.searchParams.get("categoryId");

@@ -4,7 +4,7 @@ import { requireUser } from "@/lib/auth";
 import { daysElapsedInMonth, daysInMonth, formatMoney, lastNMonths, monthKey, monthShort, weekDates } from "@/lib/money";
 import { categoryTotals, incomeOf, monthlySeries, spendOf, sumCents } from "@/lib/stats";
 import { ensureEverydayAccount, withBalances } from "@/lib/accounts";
-import { recurringKey } from "@/lib/recurring";
+import { ensureRecurringForMonth, recurringKey } from "@/lib/recurring";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,6 +15,8 @@ export async function GET(request: Request) {
   const month = new URL(request.url).searchParams.get("month") || monthKey();
   const from = lastNMonths(6, month)[0];
   await ensureEverydayAccount(user.id);
+  await ensureRecurringForMonth(user.id, month);
+  if (month !== monthKey()) await ensureRecurringForMonth(user.id, monthKey());
 
   const [transactions, allTransactions, budgets, groceryCount, accounts, goals] = await Promise.all([
     prisma.transaction.findMany({

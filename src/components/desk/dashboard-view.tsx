@@ -10,7 +10,7 @@ import { MonthNav } from "@/components/desk/month-nav";
 import { QuickMoneyDialog, type MoneyMode } from "@/components/desk/quick-money";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { api, type Bill, type DeskStats } from "@/lib/client";
+import { api, type DeskStats } from "@/lib/client";
 import { EXAMPLE_MERCHANTS } from "@/lib/household";
 import { formatDay, monthKey } from "@/lib/money";
 import { useAuth } from "@/context/auth-context";
@@ -65,18 +65,6 @@ export function DashboardView({
     income: row.income / 100,
     spend: row.spend / 100,
   }));
-
-  async function postBill(bill: Bill) {
-    try {
-      const data = await api<{ posted: number }>(`/api/transactions/repeat?month=${month}&id=${bill.id}`, {
-        method: "POST",
-      });
-      toast.success(data.posted ? "Posted" : "Already on this month");
-      await load();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Could not post");
-    }
-  }
 
   return (
     <div className="page-in stagger-in mx-auto flex w-full min-w-0 max-w-6xl flex-col gap-6 px-4 py-6 md:px-6 lg:px-8 lg:py-8">
@@ -269,38 +257,26 @@ export function DashboardView({
         <Card>
           <CardHeader>
             <CardTitle>Household bills</CardTitle>
-            <CardDescription>Repeating rent and utilities. Edit if the price changes.</CardDescription>
+            <CardDescription>Same amount every month. Change it if the price goes up.</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-2">
             {(stats?.bills ?? []).length === 0 && (
-              <p className="text-muted-foreground text-sm">No bills yet. Add rent, light, or water when you have them.</p>
+              <p className="text-muted-foreground text-sm">No monthly bills yet. Add rent, light, or water when you have them.</p>
             )}
             {(stats?.bills ?? []).slice(0, 8).map((bill) => (
               <div key={bill.id} className="flex items-center justify-between gap-2 text-sm">
                 <span className="min-w-0 truncate">
                   {bill.merchant}
-                  <span className="text-muted-foreground ml-2 text-xs">{bill.posted ? "paid" : `due day ${bill.day}`}</span>
+                  <span className="text-muted-foreground ml-2 text-xs">every month</span>
                 </span>
-                <div className="flex shrink-0 items-center gap-2">
-                  <span className={cn("tabular-nums", bill.kind === "income" && "text-emerald-400")}>
-                    {money(bill.amountCents)}
-                  </span>
-                  {!bill.posted && (
-                    <Button size="xs" variant="outline" onClick={() => void postBill(bill)}>
-                      Post
-                    </Button>
-                  )}
-                </div>
+                <span className={cn("shrink-0 tabular-nums", bill.kind === "income" && "text-emerald-400")}>
+                  {money(bill.amountCents)}
+                </span>
               </div>
             ))}
-            <div className="flex flex-wrap gap-2 pt-2">
-              <Button variant="outline" className="flex-1" onClick={() => setBillsOpen(true)}>
-                Edit bills
-              </Button>
-              <Button variant="outline" className="flex-1" onClick={() => void postAll()}>
-                Post this month
-              </Button>
-            </div>
+            <Button variant="outline" className="mt-2" onClick={() => setBillsOpen(true)}>
+              Edit bills
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -334,15 +310,6 @@ export function DashboardView({
     </div>
   );
 
-  async function postAll() {
-    try {
-      const data = await api<{ posted: number }>(`/api/transactions/repeat?month=${month}`, { method: "POST" });
-      toast.success(data.posted ? `Posted ${data.posted}` : "Nothing due");
-      await load();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Could not post bills");
-    }
-  }
 }
 
 function ActionButton({
