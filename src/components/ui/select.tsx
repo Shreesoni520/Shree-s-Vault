@@ -101,7 +101,7 @@ export function Select({
           placeMenu();
           setOpen(true);
         }}
-        className="flex h-8 w-full items-center justify-between gap-2 rounded-lg border border-input bg-background px-2.5 text-left text-sm outline-none transition-colors hover:bg-muted/40 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:border-white/25 dark:bg-[#14141c]"
+        className="flex h-8 w-full items-center justify-between gap-2 rounded-lg border-2 border-black/15 bg-background px-2.5 text-left text-sm outline-none transition-colors hover:bg-muted/40 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:border-white/30 dark:bg-[#14141c]"
       >
         <span className={cn("truncate", !selected && "text-muted-foreground")}>
           {selected?.label ?? placeholder}
@@ -122,7 +122,7 @@ export function Select({
               width: box.width,
               maxHeight: box.maxHeight,
             }}
-            className="fixed z-[500] overflow-auto rounded-xl border-2 border-white/20 bg-[#f7f8fb] p-1 text-foreground shadow-[0_18px_50px_rgba(0,0,0,0.35)] dark:border-white/35 dark:bg-[#1a1a26] dark:text-white dark:shadow-[0_20px_56px_rgba(0,0,0,0.72)]"
+            className="fixed z-[500] overflow-auto rounded-xl border-2 border-black/25 bg-white p-1 text-foreground shadow-[0_18px_50px_rgba(0,0,0,0.22)] dark:border-white/50 dark:bg-[#1a1a26] dark:text-white dark:shadow-[0_20px_56px_rgba(0,0,0,0.72)]"
           >
             {options.map((option) => {
               const isActive = option.value === value;
