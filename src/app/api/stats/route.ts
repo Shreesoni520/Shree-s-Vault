@@ -4,6 +4,7 @@ import { requireUser } from "@/lib/auth";
 import { daysElapsedInMonth, daysInMonth, formatMoney, lastNMonths, monthKey, monthShort, weekDates } from "@/lib/money";
 import { categoryTotals, incomeOf, monthlySeries, spendOf, sumCents } from "@/lib/stats";
 import { ensureEverydayAccount, withBalances } from "@/lib/accounts";
+import { isHouseholdMerchant } from "@/lib/household";
 import { ensureRecurringForMonth, monthlyBillKey } from "@/lib/recurring";
 
 export const runtime = "nodejs";
@@ -79,15 +80,19 @@ export async function GET(request: Request) {
     uniqueBills.push(row);
   }
   const monthKeys = new Set(thisMonth.map((row) => monthlyBillKey(row)));
-  const bills = uniqueBills.map((row) => ({
-    id: row.id,
-    merchant: row.merchant || row.note || (row.kind === "income" ? "Income" : "Bill"),
-    amountCents: row.amountCents,
-    kind: row.kind,
-    posted: monthKeys.has(monthlyBillKey(row)),
-    day: Number(row.date.slice(8, 10)) || 1,
-  }));
-  const billsDue = bills.filter((row) => !row.posted && row.kind === "expense").length;
+  const monthlyItems = uniqueBills
+    .filter((row) => row.kind === "expense")
+    .map((row) => ({
+      id: row.id,
+      merchant: row.merchant || row.note || "Bill",
+      amountCents: row.amountCents,
+      kind: row.kind,
+      posted: monthKeys.has(monthlyBillKey(row)),
+      day: Number(row.date.slice(8, 10)) || 1,
+    }));
+  const bills = monthlyItems.filter((row) => isHouseholdMerchant(row.merchant));
+  const subscriptions = monthlyItems.filter((row) => !isHouseholdMerchant(row.merchant));
+  const billsDue = monthlyItems.filter((row) => !row.posted).length;
 
   const week = new Set(weekDates());
   const thisWeek = allTransactions.filter((row) => week.has(row.date));
@@ -131,7 +136,7 @@ export async function GET(request: Request) {
       text:
         postedBills.length === 1
           ? `${billList} for this whole month — once, not weekly. It will not be added again until next month.${everydaySpend > 0 ? ` Extra spend besides that: ${formatMoney(everydaySpend, user.currency)}.` : ""}`
-          : `These bills are for the whole month, once each — not weekly: ${billList}.${everydaySpend > 0 ? ` Extra spend besides bills: ${formatMoney(everydaySpend, user.currency)}.` : ""}`,
+          : `These are for the whole month, once each — not weekly: ${billList}.${everydaySpend > 0 ? ` Extra spend besides those: ${formatMoney(everydaySpend, user.currency)}.` : ""}`,
     });
   }
   if (billsDue) insights.push({ tone: "warn", text: `${billsDue} repeating bill${billsDue === 1 ? "" : "s"} not posted yet.` });
@@ -163,6 +168,7 @@ export async function GET(request: Request) {
     accounts: accountRows,
     goals,
     bills,
+    subscriptions,
     groceryCount,
     recent: thisMonth.slice().sort((a, b) => b.date.localeCompare(a.date)).slice(0, 8),
     insights,

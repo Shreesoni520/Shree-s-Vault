@@ -114,6 +114,7 @@ export type DeskStats = {
   accounts: Account[];
   goals: Goal[];
   bills: Bill[];
+  subscriptions: Bill[];
   groceryCount: number;
   recent: Transaction[];
 };

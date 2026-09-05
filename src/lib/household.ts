@@ -7,4 +7,9 @@ export const HOUSEHOLD_BILLS = [
 
 export type HouseholdKey = (typeof HOUSEHOLD_BILLS)[number]["key"];
 
+export function isHouseholdMerchant(merchant: string) {
+  const name = merchant.trim().toLowerCase();
+  return HOUSEHOLD_BILLS.some((bill) => bill.merchant.toLowerCase() === name);
+}
+
 export const EXAMPLE_MERCHANTS = ["coffee", "cinema", "cafe", "tesco"];

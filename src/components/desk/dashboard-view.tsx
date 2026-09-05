@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowDownLeft, ArrowLeftRight, ArrowUpRight, Receipt } from "lucide-react";
+import { ArrowDownLeft, ArrowLeftRight, ArrowUpRight, Receipt, Repeat } from "lucide-react";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { toast } from "sonner";
 import { HouseholdBillsDialog } from "@/components/desk/household-bills-dialog";
+import { SubscriptionsDialog } from "@/components/desk/subscriptions-dialog";
 import { AccountSheet } from "@/components/desk/account-sheet";
 import { MonthNav } from "@/components/desk/month-nav";
 import { QuickMoneyDialog, type MoneyMode } from "@/components/desk/quick-money";
@@ -34,6 +35,7 @@ export function DashboardView({
   const [moneyMode, setMoneyMode] = useState<MoneyMode | null>(null);
   const [accountId, setAccountId] = useState<string | null>(null);
   const [billsOpen, setBillsOpen] = useState(false);
+  const [subsOpen, setSubsOpen] = useState(false);
   const [payee, setPayee] = useState<{ merchant?: string; amount?: string; categoryId?: string }>();
 
   async function load() {
@@ -84,9 +86,10 @@ export function DashboardView({
         <MonthNav month={month} onChange={setMonth} />
       </div>
 
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
         <ActionButton icon={ArrowUpRight} label="Add spend" onClick={() => { setPayee(undefined); setMoneyMode("pay"); }} />
         <ActionButton icon={Receipt} label="Household bills" onClick={() => setBillsOpen(true)} />
+        <ActionButton icon={Repeat} label="Subscriptions" onClick={() => setSubsOpen(true)} />
         <ActionButton icon={ArrowDownLeft} label="Add money" onClick={() => { setPayee(undefined); setMoneyMode("add"); }} />
         <ActionButton icon={ArrowLeftRight} label="Move" onClick={() => { setPayee(undefined); setMoneyMode("move"); }} />
       </div>
@@ -215,7 +218,7 @@ export function DashboardView({
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-2">
+      <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
         <Card>
           <CardHeader className="flex-row items-center justify-between">
             <div>
@@ -254,31 +257,54 @@ export function DashboardView({
             ))}
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Household bills</CardTitle>
-            <CardDescription>Same amount every month. Change it if the price goes up.</CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-2">
-            {(stats?.bills ?? []).length === 0 && (
-              <p className="text-muted-foreground text-sm">No monthly bills yet. Add rent, light, or water when you have them.</p>
-            )}
-            {(stats?.bills ?? []).slice(0, 8).map((bill) => (
-              <div key={bill.id} className="flex items-center justify-between gap-2 text-sm">
-                <span className="min-w-0 truncate">
-                  {bill.merchant}
-                  <span className="text-muted-foreground ml-2 text-xs">every month</span>
-                </span>
-                <span className={cn("shrink-0 tabular-nums", bill.kind === "income" && "text-emerald-400")}>
-                  {money(bill.amountCents)}
-                </span>
-              </div>
-            ))}
-            <Button variant="outline" className="mt-2" onClick={() => setBillsOpen(true)}>
-              Edit bills
-            </Button>
-          </CardContent>
-        </Card>
+        <div className="flex flex-col gap-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Household bills</CardTitle>
+              <CardDescription>Rent and home bills. Once a month, not weekly.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-2">
+              {(stats?.bills ?? []).length === 0 && (
+                <p className="text-muted-foreground text-sm">No monthly bills yet. Add rent, light, or water when you have them.</p>
+              )}
+              {(stats?.bills ?? []).slice(0, 8).map((bill) => (
+                <div key={bill.id} className="flex items-center justify-between gap-2 text-sm">
+                  <span className="min-w-0 truncate">
+                    {bill.merchant}
+                    <span className="text-muted-foreground ml-2 text-xs">every month</span>
+                  </span>
+                  <span className="shrink-0 tabular-nums">{money(bill.amountCents)}</span>
+                </div>
+              ))}
+              <Button variant="outline" className="mt-2" onClick={() => setBillsOpen(true)}>
+                Edit bills
+              </Button>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Subscriptions</CardTitle>
+              <CardDescription>Netflix, gym, phone. Same amount once a month.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-2">
+              {(stats?.subscriptions ?? []).length === 0 && (
+                <p className="text-muted-foreground text-sm">No subscriptions yet. Add ones that come every month.</p>
+              )}
+              {(stats?.subscriptions ?? []).slice(0, 8).map((item) => (
+                <div key={item.id} className="flex items-center justify-between gap-2 text-sm">
+                  <span className="min-w-0 truncate">
+                    {item.merchant}
+                    <span className="text-muted-foreground ml-2 text-xs">every month</span>
+                  </span>
+                  <span className="shrink-0 tabular-nums">{money(item.amountCents)}</span>
+                </div>
+              ))}
+              <Button variant="outline" className="mt-2" onClick={() => setSubsOpen(true)}>
+                {(stats?.subscriptions ?? []).length ? "Edit subscriptions" : "Add subscription"}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       <div className="text-muted-foreground flex flex-wrap gap-3 text-sm">
@@ -304,6 +330,12 @@ export function DashboardView({
         open={billsOpen}
         bills={stats?.bills ?? []}
         onOpenChange={setBillsOpen}
+        onSaved={load}
+      />
+      <SubscriptionsDialog
+        open={subsOpen}
+        items={stats?.subscriptions ?? []}
+        onOpenChange={setSubsOpen}
         onSaved={load}
       />
       <AccountSheet accountId={accountId} onClose={() => setAccountId(null)} />

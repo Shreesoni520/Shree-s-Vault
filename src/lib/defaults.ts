@@ -7,6 +7,7 @@ export const DEFAULT_CATEGORIES = [
   { name: "Rent", kind: "expense", color: "#8a7a66" },
   { name: "Transport", kind: "expense", color: "#6b8f71" },
   { name: "Bills", kind: "expense", color: "#7b6b9e" },
+  { name: "Subscriptions", kind: "expense", color: "#5b7c99" },
   { name: "Fun", kind: "expense", color: "#c47a9a" },
   { name: "Health", kind: "expense", color: "#6a9e8f" },
   { name: "Shopping", kind: "expense", color: "#b07a5a" },
