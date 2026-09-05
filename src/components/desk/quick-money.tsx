@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -13,6 +13,39 @@ import { todayKey } from "@/lib/money";
 import { useMoney } from "@/hooks/use-money";
 
 export type MoneyMode = "pay" | "add" | "move";
+
+const COPY = {
+  pay: {
+    title: "Add a spend",
+    hint: "Coffee, rent, a shop run — this comes off the account you pick.",
+    action: "Save spend",
+    saved: "Spend saved",
+    who: "Where did it go?",
+    whoHint: "Tesco, rent, coffee…",
+    account: "Paid from",
+    category: "What kind of spend?",
+  },
+  add: {
+    title: "Add income",
+    hint: "Salary, a refund, or cash you put in. This goes onto the account you pick.",
+    action: "Save income",
+    saved: "Income saved",
+    who: "Who paid you?",
+    whoHint: "Salary, refund, side work…",
+    account: "Goes into",
+    category: "What kind of income?",
+  },
+  move: {
+    title: "Move money",
+    hint: "Shift cash between your own accounts. This is not income or spend.",
+    action: "Move money",
+    saved: "Moved",
+    who: "",
+    whoHint: "",
+    account: "From",
+    category: "",
+  },
+} as const;
 
 export function QuickMoneyDialog({
   open,
@@ -33,6 +66,7 @@ export function QuickMoneyDialog({
   const [amount, setAmount] = useState("");
   const [merchant, setMerchant] = useState("");
   const [note, setNote] = useState("");
+  const [date, setDate] = useState(todayKey());
   const [accountId, setAccountId] = useState("");
   const [toAccountId, setToAccountId] = useState("");
   const [categoryId, setCategoryId] = useState("");
@@ -45,6 +79,7 @@ export function QuickMoneyDialog({
     setAmount(preset?.amount ?? "");
     setMerchant(preset?.merchant ?? "");
     setNote("");
+    setDate(todayKey());
     setAccountId(accounts[0]?.id ?? "");
     setToAccountId(accounts[1]?.id ?? accounts[0]?.id ?? "");
     setCategoryId(preset?.categoryId ?? "");
@@ -59,15 +94,21 @@ export function QuickMoneyDialog({
     () => categories.filter((item) => item.kind === kind),
     [categories, kind]
   );
-  const title = mode === "add" ? "Add money" : mode === "move" ? "Move money" : "Add activity";
-  const copy =
-    mode === "add"
-      ? "Pay, a refund, or cash you put in."
-      : mode === "move"
-        ? "Shift cash between your accounts. This is not spend."
-        : "Something you actually spent. This comes off your available cash.";
+  const copy = COPY[mode];
 
   async function save() {
+    if (!amount.trim()) {
+      toast.error("Add an amount.");
+      return;
+    }
+    if (mode !== "move" && !merchant.trim()) {
+      toast.error(mode === "add" ? "Say who paid you." : "Say where the money went.");
+      return;
+    }
+    if (mode === "move" && (!accountId || !toAccountId || accountId === toAccountId)) {
+      toast.error("Pick two different accounts.");
+      return;
+    }
     setSaving(true);
     try {
       await api("/api/transactions", {
@@ -75,8 +116,8 @@ export function QuickMoneyDialog({
         body: JSON.stringify({
           amount,
           kind,
-          date: todayKey(),
-          merchant: mode === "move" ? "Move" : merchant,
+          date,
+          merchant: mode === "move" ? "Move" : merchant.trim(),
           note,
           categoryId: mode === "move" ? null : categoryId || null,
           accountId,
@@ -84,7 +125,7 @@ export function QuickMoneyDialog({
           recurring: mode === "move" ? false : recurring,
         }),
       });
-      toast.success(mode === "add" ? "Money added" : mode === "move" ? "Moved" : "Paid");
+      toast.success(copy.saved);
       onOpenChange(false);
       await onSaved();
     } catch (error) {
@@ -96,72 +137,127 @@ export function QuickMoneyDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="overflow-visible sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>{copy}</DialogDescription>
+          <DialogTitle>{copy.title}</DialogTitle>
+          <DialogDescription>{copy.hint}</DialogDescription>
         </DialogHeader>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <div className="flex flex-col gap-2">
-            <Label>Amount</Label>
-            <div className="relative">
-              <span className="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 text-sm">{symbol}</span>
-              <Input value={amount} onChange={(event) => setAmount(event.target.value)} placeholder="12.50" className="pl-6" />
-            </div>
-          </div>
-          <div className="flex flex-col gap-2">
-            <Label>{mode === "move" ? "From" : "Account"}</Label>
-            <Select
-              value={accountId}
-              onValueChange={setAccountId}
-              options={accounts.map((item) => ({ value: item.id, label: `${item.name}` }))}
-            />
-          </div>
-          {mode === "move" ? (
-            <div className="col-span-full flex flex-col gap-2 sm:col-span-2">
-              <Label>To</Label>
-              <Select
-                value={toAccountId}
-                onValueChange={setToAccountId}
-                options={accounts.filter((item) => item.id !== accountId).map((item) => ({ value: item.id, label: item.name }))}
+
+        <div className="flex flex-col gap-4">
+          {mode !== "move" && (
+            <Field label={copy.who}>
+              <Input
+                value={merchant}
+                onChange={(event) => setMerchant(event.target.value)}
+                placeholder={copy.whoHint}
+                autoComplete="off"
               />
+            </Field>
+          )}
+
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Amount">
+              <div className="relative">
+                <span className="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 text-sm">
+                  {symbol}
+                </span>
+                <Input
+                  value={amount}
+                  onChange={(event) => setAmount(event.target.value)}
+                  placeholder="12.50"
+                  inputMode="decimal"
+                  className="pl-6"
+                />
+              </div>
+            </Field>
+            <Field label="When">
+              <Input type="date" value={date} onChange={(event) => setDate(event.target.value)} />
+            </Field>
+          </div>
+
+          {mode === "move" ? (
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="From">
+                <Select
+                  value={accountId}
+                  onValueChange={setAccountId}
+                  options={accounts.map((item) => ({ value: item.id, label: item.name }))}
+                />
+              </Field>
+              <Field label="To">
+                <Select
+                  value={toAccountId}
+                  onValueChange={setToAccountId}
+                  options={accounts.filter((item) => item.id !== accountId).map((item) => ({ value: item.id, label: item.name }))}
+                />
+              </Field>
             </div>
           ) : (
             <>
-              <div className="flex flex-col gap-2">
-                <Label>{mode === "add" ? "From" : "To"}</Label>
-                <Input value={merchant} onChange={(event) => setMerchant(event.target.value)} placeholder={mode === "add" ? "Pay" : "What did you pay?"} />
-              </div>
-              <div className="flex flex-col gap-2">
-                <Label>Category</Label>
+              <Field label={copy.account}>
+                <Select
+                  value={accountId}
+                  onValueChange={setAccountId}
+                  options={accounts.map((item) => ({ value: item.id, label: item.name }))}
+                />
+              </Field>
+              <Field label={copy.category}>
                 <Select
                   value={categoryId}
                   onValueChange={setCategoryId}
                   options={[
-                    { value: "", label: "Uncategorised" },
+                    { value: "", label: "Skip for now" },
                     ...filtered.map((item) => ({ value: item.id, label: item.name })),
                   ]}
                 />
-              </div>
+              </Field>
             </>
           )}
-          <div className="col-span-full flex flex-col gap-2">
-            <Label>Note</Label>
-            <Input value={note} onChange={(event) => setNote(event.target.value)} placeholder="Optional" />
-          </div>
+
+          <Field label="Note" optional>
+            <Input value={note} onChange={(event) => setNote(event.target.value)} placeholder="Anything else" />
+          </Field>
+
           {mode !== "move" && (
-            <label className="col-span-full flex items-center gap-2 text-sm">
+            <label className="flex items-start gap-2.5 rounded-xl border border-border px-3 py-2.5 text-sm dark:border-white/15">
               <Checkbox checked={recurring} onChange={setRecurring} />
-              Repeats every month (you can change the amount later)
+              <span>
+                <span className="block font-medium">Repeats every month</span>
+                <span className="text-muted-foreground text-xs">Use this for rent, salary, or a bill that comes every month.</span>
+              </span>
             </label>
           )}
         </div>
+
         <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
           <Button onClick={() => void save()} disabled={saving}>
-            {saving ? "Working…" : title}
+            {saving ? "Saving…" : copy.action}
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function Field({
+  label,
+  optional,
+  children,
+}: {
+  label: string;
+  optional?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <Label className="text-muted-foreground text-xs font-medium">
+        {label}
+        {optional && <span className="font-normal"> · optional</span>}
+      </Label>
+      {children}
+    </div>
   );
 }

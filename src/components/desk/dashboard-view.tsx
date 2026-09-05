@@ -97,7 +97,7 @@ export function DashboardView({
       </div>
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <ActionButton icon={ArrowUpRight} label="Add activity" onClick={() => { setPayee(undefined); setMoneyMode("pay"); }} />
+        <ActionButton icon={ArrowUpRight} label="Add spend" onClick={() => { setPayee(undefined); setMoneyMode("pay"); }} />
         <ActionButton icon={Receipt} label="Household bills" onClick={() => setBillsOpen(true)} />
         <ActionButton icon={ArrowDownLeft} label="Add money" onClick={() => { setPayee(undefined); setMoneyMode("add"); }} />
         <ActionButton icon={ArrowLeftRight} label="Move" onClick={() => { setPayee(undefined); setMoneyMode("move"); }} />
@@ -243,7 +243,7 @@ export function DashboardView({
               <div className="py-6 text-center">
                 <p className="text-muted-foreground text-sm">Nothing yet. You add every line yourself.</p>
                 <Button className="mt-3" onClick={() => { setPayee(undefined); setMoneyMode("pay"); }}>
-                  Add activity
+                  Add spend
                 </Button>
               </div>
             )}
