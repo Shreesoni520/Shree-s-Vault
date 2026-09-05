@@ -41,7 +41,7 @@ export function GroceryView() {
 
   async function addItem() {
     if (!name.trim()) {
-      toast.error("Add an item name.");
+      toast.error("Type an item name.");
       return;
     }
     const estimateCents = poundsToCents(price || "0") ?? 0;
@@ -53,7 +53,7 @@ export function GroceryView() {
       });
       setName("");
       setPrice("");
-      toast.success("Added to your monthly list");
+      toast.success("Added");
       await load();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not add item");
@@ -93,7 +93,7 @@ export function GroceryView() {
   async function resetMonth() {
     try {
       await api("/api/grocery", { method: "DELETE" });
-      toast.success("Cleared ticked items for a new month");
+      toast.success("Cleared ticked items");
       await load();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not clear");
@@ -102,80 +102,41 @@ export function GroceryView() {
 
   return (
     <div className="page-in mx-auto flex w-full min-w-0 max-w-3xl flex-col gap-6 px-4 py-6 md:px-6 lg:px-8 lg:py-8">
-      <div>
-        <p className="text-muted-foreground text-sm">Things you buy every month · add the usual price</p>
-        <h1 className="font-heading mt-1 text-4xl tracking-tight">Grocery</h1>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p className="text-muted-foreground text-sm">Monthly buys · tick when you get them</p>
+          <h1 className="font-heading mt-1 text-4xl tracking-tight">Grocery</h1>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          className="border-border dark:border-white/20"
+          onClick={() => void resetMonth()}
+          disabled={!items.some((item) => item.done)}
+        >
+          Clear ticked
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <Summary label="This month’s list" value={money(totals.monthlyCents)} hint={`${items.length} item${items.length === 1 ? "" : "s"}`} />
+        <Summary label="This month" value={money(totals.monthlyCents)} hint={`${items.length} item${items.length === 1 ? "" : "s"}`} />
         <Summary label="Still to buy" value={money(totals.leftCents)} hint={`${totals.leftCount} left`} />
-        <Summary label="Already bought" value={money(totals.boughtCents)} hint="Ticked this month" />
+        <Summary label="Bought" value={money(totals.boughtCents)} hint="Ticked this month" />
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Add a monthly item</CardTitle>
-          <CardDescription>Milk, bread, cleaning stuff — whatever you buy again and again.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form
-            className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_120px_auto]"
-            onSubmit={(event) => {
-              event.preventDefault();
-              void addItem();
-            }}
-          >
-            <Input
-              placeholder="Item name"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              autoComplete="off"
-            />
-            <div className="relative">
-              <span className="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 text-sm">
-                {symbol}
-              </span>
-              <Input
-                inputMode="decimal"
-                placeholder="Price"
-                value={price}
-                onChange={(event) => setPrice(event.target.value)}
-                className="pl-7"
-              />
-            </div>
-            <Button type="submit" disabled={busy}>
-              <Plus /> Add
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="flex-row items-start justify-between gap-3 space-y-0">
-          <div>
-            <CardTitle>Your list</CardTitle>
-            <CardDescription>Tick when you buy it. Change the price any time.</CardDescription>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => void resetMonth()}
-            disabled={!items.some((item) => item.done)}
-          >
-            Clear ticked
-          </Button>
+          <CardTitle>Your list</CardTitle>
+          <CardDescription>Name + price. No aisles, no recipe merge — just what you buy again.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-1">
           {items.length === 0 && (
-            <p className="text-muted-foreground py-8 text-center text-sm">
-              No monthly items yet. Add milk, rice, soap — whatever repeats.
-            </p>
+            <p className="text-muted-foreground py-6 text-center text-sm">Nothing here yet. Add milk, bread, soap below.</p>
           )}
           {items.map((item) => (
             <div
               key={item.id}
-              className="flex items-center gap-3 rounded-xl border border-transparent px-2 py-2.5 hover:border-white/10 hover:bg-muted/30"
+              className="flex items-center gap-3 rounded-xl border border-transparent px-2 py-2.5 hover:border-border hover:bg-muted/30 dark:hover:border-white/10"
             >
               <Checkbox checked={item.done} onChange={() => void toggle(item)} />
               <p className={`min-w-0 flex-1 text-sm ${item.done ? "text-muted-foreground line-through" : ""}`}>
@@ -195,9 +156,9 @@ export function GroceryView() {
                 />
               </div>
               <Button
-                variant="ghost"
+                variant="outline"
                 size="icon-xs"
-                className="shrink-0"
+                className="shrink-0 border-border dark:border-white/20"
                 onClick={() => void remove(item.id)}
                 title="Remove"
               >
@@ -205,6 +166,36 @@ export function GroceryView() {
               </Button>
             </div>
           ))}
+
+          <form
+            className="mt-3 grid grid-cols-1 gap-2 border-t border-border pt-3 sm:grid-cols-[1fr_110px_auto] dark:border-white/10"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void addItem();
+            }}
+          >
+            <Input
+              placeholder="New item"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              autoComplete="off"
+            />
+            <div className="relative">
+              <span className="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 text-sm">
+                {symbol}
+              </span>
+              <Input
+                inputMode="decimal"
+                placeholder="Price"
+                value={price}
+                onChange={(event) => setPrice(event.target.value)}
+                className="pl-7"
+              />
+            </div>
+            <Button type="submit" disabled={busy} className="sm:min-w-22">
+              <Plus /> Add
+            </Button>
+          </form>
         </CardContent>
       </Card>
     </div>
