@@ -39,6 +39,7 @@ export function LedgerView() {
   const [budgetAmount, setBudgetAmount] = useState("");
   const [budgetCategory, setBudgetCategory] = useState("");
   const [newCategory, setNewCategory] = useState({ name: "", kind: "expense", color: "#c9a36a" });
+  const [addingCategory, setAddingCategory] = useState(false);
 
   const load = useCallback(async () => {
     const [catData, txData, budgetData, accountData] = await Promise.all([
@@ -89,8 +90,11 @@ export function LedgerView() {
   }, [budgetCategory, budgets]);
 
   const expenseCategories = categories.filter((item) => item.kind === "expense");
-  const income = transactions.filter((row) => row.kind === "income").reduce((sum, row) => sum + row.amountCents, 0);
-  const spend = transactions.filter((row) => row.kind === "expense").reduce((sum, row) => sum + row.amountCents, 0);
+  const incomeRows = transactions.filter((row) => row.kind === "income");
+  const spendRows = transactions.filter((row) => row.kind === "expense");
+  const moveRows = transactions.filter((row) => row.kind === "transfer");
+  const income = incomeRows.reduce((sum, row) => sum + row.amountCents, 0);
+  const spend = spendRows.reduce((sum, row) => sum + row.amountCents, 0);
 
   const envelopes = budgets.map((budget) => {
     const used = transactions
@@ -123,6 +127,7 @@ export function LedgerView() {
       await api("/api/categories", { method: "POST", body: JSON.stringify(newCategory) });
       toast.success("Category added");
       setNewCategory({ name: "", kind: "expense", color: "#c9a36a" });
+      setAddingCategory(false);
       await load();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not add category");
@@ -256,92 +261,72 @@ export function LedgerView() {
             ...accounts.map((item) => ({ value: item.id, label: item.name })),
           ]}
         />
-        <div className="ml-auto flex items-center gap-4 text-sm tabular-nums">
-          <span>
-            In <span className="text-emerald-400">{money(income)}</span>
-          </span>
-          <span className="text-muted-foreground">
-            Out <span className="text-foreground">{money(spend)}</span>
-          </span>
-        </div>
       </div>
 
-      <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-[minmax(0,1.65fr)_minmax(0,1fr)]">
-        <Card>
-          <CardHeader>
-            <CardTitle>This month</CardTitle>
-            <CardDescription>Click a row to edit · N to add · / to search</CardDescription>
+      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2 xl:grid-cols-[minmax(0,1.2fr)_minmax(280px,0.7fr)_minmax(280px,0.7fr)]">
+        <Card className="lg:col-span-2 xl:col-span-1">
+          <CardHeader className="flex-row items-start justify-between gap-3 space-y-0">
+            <div>
+              <CardTitle>This month</CardTitle>
+              <CardDescription>Click a row to edit</CardDescription>
+            </div>
+            <div className="text-right text-xs tabular-nums">
+              <p className="text-emerald-400">In {money(income)}</p>
+              <p className="text-muted-foreground">Out {money(spend)}</p>
+            </div>
           </CardHeader>
-          <CardContent className="flex flex-col gap-1.5">
-            {transactions.length === 0 && (
+          <CardContent className="flex flex-col gap-5">
+            {transactions.length === 0 ? (
               <p className="text-muted-foreground py-8 text-center text-sm">
                 Nothing here yet. Add a line or import a CSV.
               </p>
+            ) : (
+              <>
+                <LedgerGroup title="Income" empty="No income this month" rows={incomeRows} money={money} onEdit={(row) => { setEditing(row); setOpen(true); }} onCopy={(row) => void duplicate(row)} />
+                <LedgerGroup title="Spend" empty="No spend this month" rows={spendRows} money={money} onEdit={(row) => { setEditing(row); setOpen(true); }} onCopy={(row) => void duplicate(row)} />
+                {moveRows.length > 0 && (
+                  <LedgerGroup title="Moves" empty="" rows={moveRows} money={money} onEdit={(row) => { setEditing(row); setOpen(true); }} onCopy={(row) => void duplicate(row)} />
+                )}
+              </>
             )}
-            {transactions.map((row) => (
-              <div
-                key={row.id}
-                className="flex items-center justify-between rounded-lg px-3 py-2.5 transition-colors hover:bg-muted/50"
-              >
-                <button
-                  type="button"
-                  className="flex min-w-0 flex-1 items-center gap-3 text-left"
-                  onClick={() => {
-                    setEditing(row);
-                    setOpen(true);
-                  }}
-                >
-                  <span
-                    className="size-2.5 shrink-0 rounded-full"
-                    style={{ background: row.category?.color ?? "#8d8a7a" }}
-                  />
-                  <div className="min-w-0">
-                    <p className="truncate text-sm">
-                      {row.kind === "transfer"
-                        ? `${row.account?.name ?? "Pot"} → ${row.toAccount?.name ?? "Pot"}`
-                        : row.merchant || row.note || "Untitled"}
-                      {row.recurring && <span className="text-muted-foreground ml-2 text-xs">repeat</span>}
-                    </p>
-                    <p className="text-muted-foreground text-xs">
-                      {formatDay(row.date)} ·{" "}
-                      {row.kind === "transfer"
-                        ? "Move"
-                        : row.category?.name ?? "Uncategorised"}
-                      {row.account && row.kind !== "transfer" ? ` · ${row.account.name}` : ""}
-                    </p>
-                  </div>
-                </button>
-                <div className="ml-3 flex items-center gap-1">
-                  <Button
-                    variant="ghost"
-                    size="icon-xs"
-                    aria-label="Duplicate"
-                    onClick={() => void duplicate(row)}
-                  >
-                    <Copy />
-                  </Button>
-                  <span
-                    className={cn(
-                      "min-w-24 text-right text-sm tabular-nums",
-                      row.kind === "income" ? "text-emerald-400" : row.kind === "transfer" ? "text-muted-foreground" : "text-foreground"
-                    )}
-                  >
-                    {row.kind === "income" ? "+" : row.kind === "transfer" ? "→" : "−"}
-                    {money(row.amountCents)}
-                  </span>
-                </div>
-              </div>
-            ))}
           </CardContent>
         </Card>
 
-        <div className="flex flex-col gap-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Category envelope</CardTitle>
-              <CardDescription>A monthly cap for one category</CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-3">
+        <Card>
+          <CardHeader className="flex-row items-start justify-between gap-3 space-y-0">
+            <div>
+              <CardTitle>Envelopes</CardTitle>
+              <CardDescription>Monthly caps</CardDescription>
+            </div>
+            <Button variant="ghost" size="xs" onClick={() => void copyLastMonth()}>
+              Copy last
+            </Button>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4">
+            {envelopes.length === 0 ? (
+              <p className="text-muted-foreground text-sm">No caps yet. Set one below.</p>
+            ) : (
+              <div className="flex flex-col gap-3">
+                {envelopes.map((budget) => {
+                  const used = budget.usedCents ?? 0;
+                  const pct = budget.amountCents ? Math.min(100, Math.round((used / budget.amountCents) * 100)) : 0;
+                  return (
+                    <div key={budget.id}>
+                      <div className="mb-1 flex justify-between gap-3 text-xs">
+                        <span className="truncate">{budget.category?.name ?? "All spend"}</span>
+                        <span className="text-muted-foreground shrink-0 tabular-nums">
+                          {money(used)} / {money(budget.amountCents)}
+                        </span>
+                      </div>
+                      <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+                        <div className="h-full rounded-full bg-primary" style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            <div className="grid grid-cols-[1fr_88px] gap-2 border-t border-border pt-3 dark:border-white/10">
               <Select
                 value={budgetCategory}
                 onValueChange={setBudgetCategory}
@@ -351,95 +336,88 @@ export function LedgerView() {
                 ]}
               />
               <div className="relative">
-                <span className="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 text-sm">{symbol}</span>
+                <span className="text-muted-foreground pointer-events-none absolute top-1/2 left-2 -translate-y-1/2 text-xs">{symbol}</span>
                 <Input
                   placeholder="100"
                   value={budgetAmount}
                   onChange={(event) => setBudgetAmount(event.target.value)}
-                  className="pl-6"
+                  className="pl-5"
                 />
               </div>
-              <Button variant="outline" onClick={() => void copyLastMonth()}>
-                Copy last month
+              <Button className="col-span-2" onClick={() => void saveBudget()}>
+                Save envelope
               </Button>
-              <Button onClick={() => void saveBudget()}>Save envelope</Button>
-              {envelopes.length > 0 && (
-                <div className="flex flex-col gap-2 pt-1">
-                  {envelopes.map((budget) => {
-                    const used = budget.usedCents ?? 0;
-                    const pct = budget.amountCents ? Math.min(100, Math.round((used / budget.amountCents) * 100)) : 0;
-                    return (
-                      <div key={budget.id}>
-                        <div className="mb-1 flex justify-between text-xs">
-                          <span>{budget.category?.name ?? "All spend"}</span>
-                          <span className="text-muted-foreground tabular-nums">
-                            {money(used)} / {money(budget.amountCents)}
-                          </span>
-                        </div>
-                        <div className="h-1.5 overflow-hidden rounded-full bg-muted">
-                          <div className="h-full rounded-full bg-primary" style={{ width: `${pct}%` }} />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex-row items-start justify-between gap-3 space-y-0">
+            <div>
               <CardTitle>Categories</CardTitle>
-              <CardDescription>Yours alone — income and spend</CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-3">
-              <Input
-                placeholder="Name"
-                value={newCategory.name}
-                onChange={(event) => setNewCategory((current) => ({ ...current, name: event.target.value }))}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") void addCategory();
-                }}
-              />
-              <KindPills
-                includeAll={false}
-                value={newCategory.kind}
-                onChange={(value) => setNewCategory((current) => ({ ...current, kind: value || "expense" }))}
-              />
-              <div className="flex flex-wrap gap-1.5">
-                {CATEGORY_COLORS.map((color) => (
-                  <button
-                    key={color}
-                    type="button"
-                    aria-label={`Colour ${color}`}
-                    onClick={() => setNewCategory((current) => ({ ...current, color }))}
-                    className={cn(
-                      "size-4 rounded-full ring-offset-2 ring-offset-card",
-                      newCategory.color === color ? "ring-2 ring-foreground" : "opacity-70 hover:opacity-100"
-                    )}
-                    style={{ background: color }}
-                  />
-                ))}
+              <CardDescription>Income and spend labels</CardDescription>
+            </div>
+            <Button
+              variant="outline"
+              size="xs"
+              className="dark:border-white/20"
+              onClick={() => setAddingCategory((current) => !current)}
+            >
+              {addingCategory ? "Cancel" : "New"}
+            </Button>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3">
+            {addingCategory && (
+              <div className="flex flex-col gap-2 rounded-xl border border-border p-3 dark:border-white/15">
+                <Input
+                  placeholder="Name"
+                  value={newCategory.name}
+                  onChange={(event) => setNewCategory((current) => ({ ...current, name: event.target.value }))}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") void addCategory();
+                  }}
+                />
+                <KindPills
+                  includeAll={false}
+                  value={newCategory.kind}
+                  onChange={(value) => setNewCategory((current) => ({ ...current, kind: value || "expense" }))}
+                />
+                <div className="flex flex-wrap gap-1.5">
+                  {CATEGORY_COLORS.map((color) => (
+                    <button
+                      key={color}
+                      type="button"
+                      aria-label={`Colour ${color}`}
+                      onClick={() => setNewCategory((current) => ({ ...current, color }))}
+                      className={cn(
+                        "size-4 rounded-full ring-offset-2 ring-offset-card",
+                        newCategory.color === color ? "ring-2 ring-foreground" : "opacity-70 hover:opacity-100"
+                      )}
+                      style={{ background: color }}
+                    />
+                  ))}
+                </div>
+                <Button size="sm" onClick={() => void addCategory()}>
+                  Save category
+                </Button>
               </div>
-              <Button variant="outline" onClick={() => void addCategory()}>
-                Add category
-              </Button>
-              <div className="flex max-h-56 flex-col gap-1 overflow-auto pr-1">
-                {categories.map((item) => (
-                  <div key={item.id} className="flex items-center justify-between rounded-lg px-2 py-1.5 hover:bg-muted/40">
-                    <span className="flex items-center gap-2 text-sm">
-                      <span className="size-2.5 rounded-full" style={{ background: item.color }} />
-                      {item.name}
-                      <span className="text-muted-foreground text-xs">{kindLabel(item.kind)}</span>
-                    </span>
-                    <Button variant="ghost" size="icon-xs" onClick={() => void removeCategory(item.id)}>
-                      <Trash2 />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+            )}
+            <div className="flex max-h-80 flex-col gap-0.5 overflow-auto pr-1">
+              {categories.map((item) => (
+                <div key={item.id} className="flex items-center justify-between rounded-lg px-2 py-1.5 hover:bg-muted/40">
+                  <span className="flex min-w-0 items-center gap-2 text-sm">
+                    <span className="size-2.5 shrink-0 rounded-full" style={{ background: item.color }} />
+                    <span className="truncate">{item.name}</span>
+                    <span className="text-muted-foreground shrink-0 text-xs">{kindLabel(item.kind)}</span>
+                  </span>
+                  <Button variant="ghost" size="icon-xs" onClick={() => void removeCategory(item.id)}>
+                    <Trash2 />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <LineDialog
@@ -498,6 +476,82 @@ export function LedgerView() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+function LedgerGroup({
+  title,
+  empty,
+  rows,
+  money,
+  onEdit,
+  onCopy,
+}: {
+  title: string;
+  empty: string;
+  rows: Transaction[];
+  money: (cents: number) => string;
+  onEdit: (row: Transaction) => void;
+  onCopy: (row: Transaction) => void;
+}) {
+  return (
+    <section className="flex flex-col gap-1">
+      <div className="flex items-center justify-between px-1">
+        <h3 className="text-muted-foreground text-xs font-medium tracking-wide uppercase">{title}</h3>
+        {rows.length > 0 && (
+          <span className="text-muted-foreground text-xs tabular-nums">{rows.length}</span>
+        )}
+      </div>
+      {rows.length === 0 ? (
+        <p className="text-muted-foreground px-1 py-2 text-sm">{empty}</p>
+      ) : (
+        rows.map((row) => (
+          <div
+            key={row.id}
+            className="flex items-center gap-2 rounded-xl border border-transparent px-2 py-2 transition-colors hover:border-border hover:bg-muted/40 dark:hover:border-white/10"
+          >
+            <button
+              type="button"
+              className="flex min-w-0 flex-1 items-center gap-3 text-left"
+              onClick={() => onEdit(row)}
+            >
+              <span
+                className="size-2.5 shrink-0 rounded-full"
+                style={{ background: row.category?.color ?? "#8d8a7a" }}
+              />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm">
+                  {row.kind === "transfer"
+                    ? `${row.account?.name ?? "Pot"} → ${row.toAccount?.name ?? "Pot"}`
+                    : row.merchant || row.note || row.category?.name || "Untitled"}
+                  {row.recurring && <span className="text-muted-foreground ml-2 text-xs">repeat</span>}
+                </p>
+                <p className="text-muted-foreground truncate text-xs">
+                  {formatDay(row.date)}
+                  {row.kind === "transfer"
+                    ? " · Move"
+                    : row.account
+                      ? ` · ${row.account.name}`
+                      : ""}
+                </p>
+              </div>
+            </button>
+            <Button variant="ghost" size="icon-xs" aria-label="Duplicate" onClick={() => onCopy(row)}>
+              <Copy />
+            </Button>
+            <span
+              className={cn(
+                "w-28 shrink-0 text-right text-sm tabular-nums",
+                row.kind === "income" ? "text-emerald-400" : row.kind === "transfer" ? "text-muted-foreground" : "text-foreground"
+              )}
+            >
+              {row.kind === "income" ? "+" : row.kind === "transfer" ? "→" : "−"}
+              {money(row.amountCents)}
+            </span>
+          </div>
+        ))
+      )}
+    </section>
   );
 }
 
