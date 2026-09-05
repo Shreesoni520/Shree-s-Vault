@@ -79,7 +79,7 @@ export function DeskHome() {
             <button
               type="button"
               onClick={() => setTab("settings")}
-              className="flex items-center gap-2 rounded-full py-0.5 pr-2 pl-0.5 hover:bg-foreground/5"
+              className="flex items-center gap-2 rounded-full border border-white/15 bg-foreground/5 py-0.5 pr-2.5 pl-0.5 hover:border-white/30 hover:bg-foreground/10"
               title="Profile"
             >
               <UserAvatar name={user?.displayName || user?.username || "?"} src={user?.avatar} className="size-7" />
