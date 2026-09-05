@@ -42,7 +42,7 @@ export async function requireUser() {
 
 export async function seedUserDefaults(
   userId: string,
-  db: Pick<PrismaClient, "category" | "recipe" | "account"> = prisma
+  db: Pick<PrismaClient, "category" | "account"> = prisma
 ) {
   await db.category.createMany({
     data: DEFAULT_CATEGORIES.map((category) => ({
@@ -51,43 +51,6 @@ export async function seedUserDefaults(
       kind: category.kind,
       color: category.color,
     })),
-  });
-  await db.recipe.create({
-    data: {
-      userId,
-      title: "Overnight oats",
-      servings: 1,
-      minutes: 5,
-      tags: "breakfast, vegetarian",
-      notes: "Stir oats, milk, and a pinch of salt. Chill overnight. Top with fruit in the morning.",
-      ingredients: {
-        create: [
-          { name: "Rolled oats", quantity: 50, unit: "g", aisle: "Pantry", sortOrder: 0 },
-          { name: "Milk", quantity: 150, unit: "ml", aisle: "Dairy", sortOrder: 1 },
-          { name: "Honey", quantity: 1, unit: "tsp", aisle: "Pantry", sortOrder: 2 },
-          { name: "Banana", quantity: 1, unit: "pcs", aisle: "Produce", sortOrder: 3 },
-        ],
-      },
-    },
-  });
-  await db.recipe.create({
-    data: {
-      userId,
-      title: "Tomato pasta",
-      servings: 2,
-      minutes: 25,
-      tags: "weeknight, vegetarian",
-      notes: "Boil pasta. Warm garlic and tomatoes in a pan. Toss together with a little pasta water.",
-      ingredients: {
-        create: [
-          { name: "Spaghetti", quantity: 180, unit: "g", aisle: "Pantry", sortOrder: 0 },
-          { name: "Tomatoes", quantity: 400, unit: "g", aisle: "Produce", sortOrder: 1 },
-          { name: "Garlic", quantity: 2, unit: "pcs", aisle: "Produce", sortOrder: 2 },
-          { name: "Olive oil", quantity: 2, unit: "tbsp", aisle: "Pantry", sortOrder: 3 },
-          { name: "Salt", quantity: 1, unit: "tsp", aisle: "Spices", sortOrder: 4 },
-        ],
-      },
-    },
   });
 
   await db.account.create({

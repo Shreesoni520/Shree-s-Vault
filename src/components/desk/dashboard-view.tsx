@@ -19,12 +19,10 @@ import { cn } from "@/lib/utils";
 
 export function DashboardView({
   onOpenLedger,
-  onOpenRecipes,
   onOpenGrocery,
   onOpenPots,
 }: {
   onOpenLedger: () => void;
-  onOpenRecipes: () => void;
   onOpenGrocery: () => void;
   onOpenPots: () => void;
 }) {
@@ -310,9 +308,6 @@ export function DashboardView({
       <div className="text-muted-foreground flex flex-wrap gap-3 text-sm">
         <button type="button" className="hover:text-foreground" onClick={onOpenPots}>
           Accounts
-        </button>
-        <button type="button" className="hover:text-foreground" onClick={onOpenRecipes}>
-          Recipes
         </button>
         <button type="button" className="hover:text-foreground" onClick={onOpenGrocery}>
           Grocery

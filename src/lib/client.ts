@@ -60,26 +60,6 @@ export type Transaction = {
   toAccount?: Account | null;
 };
 
-export type Ingredient = {
-  id?: string;
-  name: string;
-  quantity: number;
-  unit: string;
-  aisle: string;
-};
-
-export type Recipe = {
-  id: string;
-  title: string;
-  servings: number;
-  minutes: number;
-  notes: string;
-  tags: string;
-  sourceUrl: string;
-  favorite: boolean;
-  ingredients: Ingredient[];
-};
-
 export type GroceryItem = {
   id: string;
   name: string;
@@ -89,13 +69,6 @@ export type GroceryItem = {
   done: boolean;
   recipeTitle: string;
   estimateCents: number;
-};
-
-export type MealSlot = {
-  id: string;
-  date: string;
-  recipeId: string;
-  recipe: Recipe;
 };
 
 export type Budget = {
@@ -140,7 +113,6 @@ export type DeskStats = {
   accounts: Account[];
   goals: Goal[];
   bills: Bill[];
-  recipeCount: number;
   groceryCount: number;
   recent: Transaction[];
 };

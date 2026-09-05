@@ -24,7 +24,7 @@
 
 Most money apps live on someone else's cloud, with someone else's ads. This one lives on **your desk**.
 
-You create a username. You pick a currency and what you actually earn. Then you log what comes in and what goes out — no invented transactions, no “sample month” that pretends to be you. Accounts, leftover money, recipes, and the grocery list sit in the same login.
+You create a username. You pick a currency and what you actually earn. Then you log what comes in and what goes out — no invented transactions, no “sample month” that pretends to be you. Accounts, leftover money, and a monthly grocery list sit in the same login.
 
 Same username, same password, same numbers — Chrome, Edge, another computer — as long as they hit this app.
 
@@ -43,8 +43,7 @@ Built for one person who wants the books and the kitchen in one quiet place. Not
 | **Ledger** | Income, spend, envelopes, search, payees, CSV in and out |
 | **Accounts** | Everyday and savings, opening balances, statements, move money between them |
 | **Household bills** | Rent, light, water, internet — you type the figures |
-| **Recipe box** | Save recipes, scale servings, favourite, duplicate, send ingredients to grocery |
-| **Grocery list** | Aisle groups, tick off, merge, estimates if you want them |
+| **Grocery** | Monthly items and prices — milk, rice, soap — tick when bought |
 | **Yours only** | Your ledger is not mixed with anyone else’s. Live data sits in your Neon database |
 
 ---
@@ -92,8 +91,7 @@ Sign up  →  currency, pay, leftover goal
                 ├─ Desk: available, accounts, month
                 ├─ Ledger: income, spend, envelopes, CSV
                 ├─ Accounts: everyday, savings, transfers
-                ├─ Recipes: scale, favourite, cook
-                └─ Grocery: aisles from the kitchen or by hand
+                └─ Grocery: monthly items and prices
 ```
 
 - **Auth** is username + password with a signed cookie session. Passwords are salted hashes. A username can only be taken once.
@@ -106,7 +104,7 @@ Shree-s-Vault/
 ├── prisma/schema.prisma
 ├── public/                 # mark, favicons
 ├── src/app/                # pages + API
-├── src/components/desk/    # Desk, Ledger, Accounts, Recipes, Grocery, Settings
+├── src/components/desk/    # Desk, Ledger, Accounts, Grocery, Settings
 └── src/lib/                # money, auth, sessions
 ```
 

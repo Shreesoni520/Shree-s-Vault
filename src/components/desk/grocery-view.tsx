@@ -2,15 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Printer } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Select } from "@/components/ui/select";
 import { api, type GroceryItem } from "@/lib/client";
-import { AISLES } from "@/lib/defaults";
-import { formatQty } from "@/lib/recipes";
 import { centsToPounds, poundsToCents } from "@/lib/money";
 import { useMoney } from "@/hooks/use-money";
 
@@ -18,9 +15,8 @@ export function GroceryView() {
   const { money, symbol } = useMoney();
   const [items, setItems] = useState<GroceryItem[]>([]);
   const [name, setName] = useState("");
-  const [quantity, setQuantity] = useState("1");
-  const [unit, setUnit] = useState("");
-  const [aisle, setAisle] = useState("Other");
+  const [price, setPrice] = useState("");
+  const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
     const data = await api<{ items: GroceryItem[] }>("/api/grocery");
@@ -31,13 +27,16 @@ export function GroceryView() {
     load().catch((error) => toast.error(error instanceof Error ? error.message : "Could not load grocery"));
   }, [load]);
 
-  const grouped = useMemo(() => {
-    const map = new Map<string, GroceryItem[]>();
-    for (const item of items) {
-      const key = item.aisle || "Other";
-      map.set(key, [...(map.get(key) ?? []), item]);
-    }
-    return [...map.entries()];
+  const totals = useMemo(() => {
+    const monthlyCents = items.reduce((sum, item) => sum + item.estimateCents, 0);
+    const boughtCents = items.filter((item) => item.done).reduce((sum, item) => sum + item.estimateCents, 0);
+    const leftCents = monthlyCents - boughtCents;
+    return {
+      monthlyCents,
+      boughtCents,
+      leftCents,
+      leftCount: items.filter((item) => !item.done).length,
+    };
   }, [items]);
 
   async function addItem() {
@@ -45,16 +44,21 @@ export function GroceryView() {
       toast.error("Add an item name.");
       return;
     }
+    const estimateCents = poundsToCents(price || "0") ?? 0;
+    setBusy(true);
     try {
       await api("/api/grocery", {
         method: "POST",
-        body: JSON.stringify({ name, quantity: Number(quantity) || 1, unit, aisle }),
+        body: JSON.stringify({ name: name.trim(), estimateCents, quantity: 1, unit: "", aisle: "Monthly" }),
       });
       setName("");
-      setQuantity("1");
+      setPrice("");
+      toast.success("Added to your monthly list");
       await load();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not add item");
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -67,6 +71,16 @@ export function GroceryView() {
     }
   }
 
+  async function savePrice(item: GroceryItem, value: string) {
+    const estimateCents = poundsToCents(value || "0") ?? 0;
+    try {
+      await api(`/api/grocery/${item.id}`, { method: "PUT", body: JSON.stringify({ estimateCents }) });
+      await load();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not save price");
+    }
+  }
+
   async function remove(id: string) {
     try {
       await api(`/api/grocery/${id}`, { method: "DELETE" });
@@ -76,149 +90,135 @@ export function GroceryView() {
     }
   }
 
-  async function clearDone() {
+  async function resetMonth() {
     try {
       await api("/api/grocery", { method: "DELETE" });
-      toast.success("Cleared ticked items");
+      toast.success("Cleared ticked items for a new month");
       await load();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not clear");
     }
   }
 
-  function copyList() {
-    const open = grouped
-      .map(([group, rows]) => {
-        const leftover = rows.filter((item) => !item.done);
-        if (!leftover.length) return "";
-        return `${group}\n${leftover.map((item) => `- ${formatQty(item.quantity)} ${item.unit} ${item.name}`).join("\n")}`;
-      })
-      .filter(Boolean)
-      .join("\n\n");
-    void navigator.clipboard.writeText(open || "Nothing left to pick up.");
-    toast.success("Copied grocery list");
-  }
-
-  async function mergeDupes() {
-    try {
-      const data = await api<{ merged: number }>("/api/grocery/merge", { method: "POST" });
-      toast.success(data.merged ? `Merged ${data.merged} duplicate${data.merged === 1 ? "" : "s"}` : "Nothing to merge");
-      await load();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Could not merge");
-    }
-  }
-
-  async function saveEstimate(item: GroceryItem, value: string) {
-    const cents = poundsToCents(value || "0") ?? 0;
-    try {
-      await api(`/api/grocery/${item.id}`, { method: "PUT", body: JSON.stringify({ estimateCents: cents }) });
-      await load();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Could not save estimate");
-    }
-  }
-
-  function printList() {
-    window.print();
-  }
-
-  const remaining = items.filter((item) => !item.done).length;
-  const estimate = items.filter((item) => !item.done).reduce((sum, item) => sum + item.estimateCents, 0);
-
   return (
-    <div className="page-in mx-auto flex w-full min-w-0 max-w-4xl flex-col gap-6 px-4 py-6 md:px-6 lg:px-8 lg:py-8">
-      <div className="flex items-end justify-between gap-4">
-        <div>
-          <p className="text-muted-foreground text-sm">
-            {remaining} of {items.length} still to pick up
-            {estimate ? ` · about ${money(estimate)}` : ""}
-          </p>
-          <h1 className="font-heading mt-1 text-4xl tracking-tight">Grocery list</h1>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => void mergeDupes()} disabled={items.length < 2}>
-            Merge dupes
-          </Button>
-          <Button variant="outline" onClick={printList} disabled={!items.length}>
-            <Printer /> Print
-          </Button>
-          <Button variant="outline" onClick={copyList} disabled={!items.length}>
-            Copy list
-          </Button>
-          <Button variant="outline" onClick={() => void clearDone()} disabled={!items.some((item) => item.done)}>
-            Clear ticked
-          </Button>
-        </div>
+    <div className="page-in mx-auto flex w-full min-w-0 max-w-3xl flex-col gap-6 px-4 py-6 md:px-6 lg:px-8 lg:py-8">
+      <div>
+        <p className="text-muted-foreground text-sm">Things you buy every month · add the usual price</p>
+        <h1 className="font-heading mt-1 text-4xl tracking-tight">Grocery</h1>
+      </div>
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <Summary label="This month’s list" value={money(totals.monthlyCents)} hint={`${items.length} item${items.length === 1 ? "" : "s"}`} />
+        <Summary label="Still to buy" value={money(totals.leftCents)} hint={`${totals.leftCount} left`} />
+        <Summary label="Already bought" value={money(totals.boughtCents)} hint="Ticked this month" />
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Add by hand</CardTitle>
-          <CardDescription>Or tick ingredients on a recipe and send them here.</CardDescription>
+          <CardTitle>Add a monthly item</CardTitle>
+          <CardDescription>Milk, bread, cleaning stuff — whatever you buy again and again.</CardDescription>
         </CardHeader>
         <CardContent>
           <form
-            className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-[1.4fr_80px_100px_140px_auto]"
+            className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_120px_auto]"
             onSubmit={(event) => {
               event.preventDefault();
               void addItem();
             }}
           >
-            <Input placeholder="Item" value={name} onChange={(event) => setName(event.target.value)} />
-            <Input value={quantity} onChange={(event) => setQuantity(event.target.value)} />
-            <Input placeholder="unit" value={unit} onChange={(event) => setUnit(event.target.value)} />
-            <Select
-              value={aisle}
-              onValueChange={setAisle}
-              options={AISLES.map((item) => ({ value: item, label: item }))}
+            <Input
+              placeholder="Item name"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              autoComplete="off"
             />
-            <Button type="submit">Add</Button>
+            <div className="relative">
+              <span className="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 text-sm">
+                {symbol}
+              </span>
+              <Input
+                inputMode="decimal"
+                placeholder="Price"
+                value={price}
+                onChange={(event) => setPrice(event.target.value)}
+                className="pl-7"
+              />
+            </div>
+            <Button type="submit" disabled={busy}>
+              <Plus /> Add
+            </Button>
           </form>
         </CardContent>
       </Card>
 
-      {grouped.length === 0 && (
-        <p className="text-muted-foreground py-8 text-center text-sm">Your basket is empty.</p>
-      )}
-
-      {grouped.map(([group, rows]) => (
-        <Card key={group}>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              {group}
-              <span className="text-muted-foreground text-xs font-sans font-normal">
-                {rows.filter((item) => !item.done).length} left
-              </span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-1">
-            {rows.map((item) => (
-              <div key={item.id} className="flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-muted/40">
-                <Checkbox checked={item.done} onChange={() => void toggle(item)} />
-                <div className="min-w-0 flex-1">
-                  <p className={item.done ? "text-muted-foreground text-sm line-through" : "text-sm"}>
-                    {formatQty(item.quantity)} {item.unit} {item.name}
-                  </p>
-                  {item.recipeTitle && <p className="text-muted-foreground text-xs">from {item.recipeTitle}</p>}
-                </div>
-                <div className="relative w-20">
-                  <span className="text-muted-foreground pointer-events-none absolute top-1/2 left-1.5 -translate-y-1/2 text-xs">{symbol}</span>
-                  <Input
-                    defaultValue={item.estimateCents ? String(centsToPounds(item.estimateCents)) : ""}
-                    className="pl-5"
-                    placeholder="0"
-                    onBlur={(event) => void saveEstimate(item, event.target.value)}
-                  />
-                </div>
-                <Button variant="ghost" size="xs" onClick={() => void remove(item.id)}>
-                  Remove
-                </Button>
+      <Card>
+        <CardHeader className="flex-row items-start justify-between gap-3 space-y-0">
+          <div>
+            <CardTitle>Your list</CardTitle>
+            <CardDescription>Tick when you buy it. Change the price any time.</CardDescription>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => void resetMonth()}
+            disabled={!items.some((item) => item.done)}
+          >
+            Clear ticked
+          </Button>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-1">
+          {items.length === 0 && (
+            <p className="text-muted-foreground py-8 text-center text-sm">
+              No monthly items yet. Add milk, rice, soap — whatever repeats.
+            </p>
+          )}
+          {items.map((item) => (
+            <div
+              key={item.id}
+              className="flex items-center gap-3 rounded-xl border border-transparent px-2 py-2.5 hover:border-white/10 hover:bg-muted/30"
+            >
+              <Checkbox checked={item.done} onChange={() => void toggle(item)} />
+              <p className={`min-w-0 flex-1 text-sm ${item.done ? "text-muted-foreground line-through" : ""}`}>
+                {item.name}
+              </p>
+              <div className="relative w-24 shrink-0">
+                <span className="text-muted-foreground pointer-events-none absolute top-1/2 left-2 -translate-y-1/2 text-xs">
+                  {symbol}
+                </span>
+                <Input
+                  key={`${item.id}-${item.estimateCents}`}
+                  inputMode="decimal"
+                  defaultValue={item.estimateCents ? String(centsToPounds(item.estimateCents)) : ""}
+                  className="pl-5"
+                  placeholder="0"
+                  onBlur={(event) => void savePrice(item, event.target.value)}
+                />
               </div>
-            ))}
-          </CardContent>
-        </Card>
-      ))}
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                className="shrink-0"
+                onClick={() => void remove(item.id)}
+                title="Remove"
+              >
+                <Trash2 />
+              </Button>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
     </div>
+  );
+}
+
+function Summary({ label, value, hint }: { label: string; value: string; hint: string }) {
+  return (
+    <Card size="sm">
+      <CardHeader>
+        <CardDescription>{label}</CardDescription>
+        <CardTitle className="font-heading text-2xl tabular-nums">{value}</CardTitle>
+      </CardHeader>
+      <CardContent className="text-muted-foreground text-xs">{hint}</CardContent>
+    </Card>
   );
 }

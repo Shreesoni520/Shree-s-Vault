@@ -21,7 +21,7 @@ const syne = Syne({
 
 export const metadata: Metadata = {
   title: APP_NAME,
-  description: `${APP_TAGLINE}. Track income, spending, accounts, and recipes in one private desk.`,
+  description: `${APP_TAGLINE}. Track income, spending, accounts, and grocery in one private desk.`,
   icons: {
     icon: { url: "/icon-light.png", type: "image/png" },
     apple: "/icon-light.png",

@@ -54,7 +54,7 @@ export function LandingPage() {
           {[
             { label: "Ledger", copy: "Income, spend, envelopes, and your currency." },
             { label: "Accounts", copy: "Everyday, savings, statements, bills you edit." },
-            { label: "Kitchen", copy: "Recipes that scale, then a grocery list that shops." },
+            { label: "Grocery", copy: "Monthly items and prices, so food spend stays clear." },
           ].map((item, index) => (
             <div
               key={item.label}

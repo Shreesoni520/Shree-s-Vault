@@ -1,7 +1,22 @@
 import { currencyMeta } from "@/lib/currency";
 
 export function poundsToCents(value: string | number) {
-  const n = typeof value === "number" ? value : Number(String(value).replace(/[£€$₹,\s]/g, ""));
+  if (typeof value === "number") {
+    if (!Number.isFinite(value)) return null;
+    return Math.round(value * 100);
+  }
+  let raw = String(value).trim().replace(/[£€$₹\s]/g, "");
+  if (!raw) return null;
+  if (raw.includes(",") && raw.includes(".")) {
+    if (raw.lastIndexOf(",") > raw.lastIndexOf(".")) {
+      raw = raw.replace(/\./g, "").replace(",", ".");
+    } else {
+      raw = raw.replace(/,/g, "");
+    }
+  } else if (raw.includes(",")) {
+    raw = /,\d{1,2}$/.test(raw) ? raw.replace(",", ".") : raw.replace(/,/g, "");
+  }
+  const n = Number(raw);
   if (!Number.isFinite(n)) return null;
   return Math.round(n * 100);
 }

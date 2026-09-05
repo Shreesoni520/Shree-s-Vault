@@ -16,7 +16,7 @@ export async function GET(request: Request) {
   const from = lastNMonths(6, month)[0];
   await ensureEverydayAccount(user.id);
 
-  const [transactions, allTransactions, budgets, recipeCount, groceryCount, accounts, goals] = await Promise.all([
+  const [transactions, allTransactions, budgets, groceryCount, accounts, goals] = await Promise.all([
     prisma.transaction.findMany({
       where: { userId: user.id, date: { gte: `${from}-01` } },
       include: { category: true, account: true, toAccount: true },
@@ -26,7 +26,6 @@ export async function GET(request: Request) {
       where: { userId: user.id, month },
       include: { category: true },
     }),
-    prisma.recipe.count({ where: { userId: user.id } }),
     prisma.groceryItem.count({ where: { userId: user.id, done: false } }),
     prisma.account.findMany({ where: { userId: user.id, archived: false }, orderBy: { createdAt: "asc" } }),
     prisma.goal.findMany({ where: { userId: user.id }, orderBy: { createdAt: "asc" } }),
@@ -140,7 +139,6 @@ export async function GET(request: Request) {
     accounts: accountRows,
     goals,
     bills,
-    recipeCount,
     groceryCount,
     recent: thisMonth.slice().sort((a, b) => b.date.localeCompare(a.date)).slice(0, 8),
     insights,

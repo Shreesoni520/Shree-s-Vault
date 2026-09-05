@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import {
-  BookOpen,
   LayoutDashboard,
   LogOut,
   PiggyBank,
@@ -17,7 +16,6 @@ import { DashboardView } from "@/components/desk/dashboard-view";
 import { GroceryView } from "@/components/desk/grocery-view";
 import { LedgerView } from "@/components/desk/ledger-view";
 import { PotsView } from "@/components/desk/pots-view";
-import { RecipesView } from "@/components/desk/recipes-view";
 import { SettingsView } from "@/components/desk/settings-view";
 import { UserAvatar } from "@/components/user-avatar";
 import { useAuth } from "@/context/auth-context";
@@ -27,7 +25,6 @@ const NAV = [
   { id: "desk", label: "Desk", icon: LayoutDashboard },
   { id: "ledger", label: "Ledger", icon: Wallet },
   { id: "pots", label: "Accounts", icon: PiggyBank },
-  { id: "recipes", label: "Recipes", icon: BookOpen },
   { id: "grocery", label: "Grocery", icon: ShoppingBasket },
   { id: "settings", label: "Settings", icon: Settings },
 ] as const;
@@ -120,20 +117,18 @@ export function DeskHome() {
             {tab === "desk" && (
               <DashboardView
                 onOpenLedger={() => setTab("ledger")}
-                onOpenRecipes={() => setTab("recipes")}
                 onOpenGrocery={() => setTab("grocery")}
                 onOpenPots={() => setTab("pots")}
               />
             )}
             {tab === "ledger" && <LedgerView />}
             {tab === "pots" && <PotsView />}
-            {tab === "recipes" && <RecipesView />}
             {tab === "grocery" && <GroceryView />}
             {tab === "settings" && <SettingsView />}
           </div>
         </main>
         <nav
-          className="nav-track relative z-30 grid shrink-0 grid-cols-6 gap-0 border-t border-white/10 bg-card/90 p-1.5 backdrop-blur-xl md:hidden"
+          className="nav-track relative z-30 grid shrink-0 grid-cols-5 gap-0 border-t border-white/10 bg-card/90 p-1.5 backdrop-blur-xl md:hidden"
           aria-label="Mobile desk"
         >
           <span
