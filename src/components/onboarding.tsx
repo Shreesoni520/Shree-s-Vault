@@ -12,7 +12,7 @@ import { HOUSEHOLD_BILLS } from "@/lib/household";
 import { formatMoney, poundsToCents } from "@/lib/money";
 import { cn } from "@/lib/utils";
 
-const STEPS = ["Currency", "Pay", "Cash", "Bills", "Goal"] as const;
+const STEPS = ["Currency", "Pay", "Cash", "Bills", "Save"] as const;
 
 export function Onboarding() {
   const { user, completeOnboard, logout } = useAuth();
@@ -29,6 +29,18 @@ export function Onboarding() {
     const billCents = HOUSEHOLD_BILLS.reduce((sum, bill) => sum + (poundsToCents(bills[bill.key]) ?? 0), 0);
     return { payCents, billCents, leftCents: payCents - billCents };
   }, [salary, bills]);
+  const savePlan = useMemo(() => {
+    const leftCents = leftoverAfterBills.leftCents;
+    const saveCents = Math.max(0, poundsToCents(leftoverGoal) ?? 0);
+    const cappedSave = Math.min(saveCents, Math.max(0, leftCents));
+    const spendCents = leftCents - cappedSave;
+    return {
+      saveCents: cappedSave,
+      spendCents,
+      weekCents: Math.round(spendCents / 4),
+      dayCents: Math.round(spendCents / 30),
+    };
+  }, [leftoverAfterBills.leftCents, leftoverGoal]);
 
   async function finish() {
     setSaving(true);
@@ -183,9 +195,9 @@ export function Onboarding() {
 
           {step === 4 && (
             <div>
-              <h2 className="font-heading text-2xl">How much to keep?</h2>
+              <h2 className="font-heading text-2xl">How much to save?</h2>
               <p className="text-muted-foreground mt-1 text-sm">
-                After your pay and the bills you typed, this is left this month. Use it to think about saving.
+                From what is left after bills, choose how much to put aside. The rest is your everyday money.
               </p>
               <div className="mt-5 rounded-2xl border border-white/10 bg-background/40 px-4 py-4">
                 <p className="text-muted-foreground text-xs tracking-[0.18em] uppercase">Left after bills</p>
@@ -197,8 +209,10 @@ export function Onboarding() {
                   {formatMoney(leftoverAfterBills.billCents, currency)}
                 </p>
               </div>
-              <Label className="mt-5">Monthly leftover goal</Label>
-              <p className="text-muted-foreground mt-1 text-xs">Optional. How much of that leftover you want to keep.</p>
+              <Label className="mt-5">Save on the side each month</Label>
+              <p className="text-muted-foreground mt-1 text-xs">
+                Optional. How much of that leftover you want to keep, not spend.
+              </p>
               <div className="relative mt-2">
                 <span className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 -translate-y-1/2">
                   {symbol}
@@ -210,6 +224,26 @@ export function Onboarding() {
                   placeholder="0"
                   className="h-12 pl-7 text-lg"
                 />
+              </div>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-2xl border border-primary/25 bg-primary/10 px-4 py-3">
+                  <p className="text-muted-foreground text-xs tracking-[0.18em] uppercase">Everyday spend</p>
+                  <p className="font-heading mt-1 text-2xl tracking-tight">
+                    {formatMoney(savePlan.spendCents, currency)}
+                  </p>
+                  <p className="text-muted-foreground mt-1 text-xs leading-5">
+                    Left for food, shops, and the rest of the month
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-background/40 px-4 py-3">
+                  <p className="text-muted-foreground text-xs tracking-[0.18em] uppercase">About per week</p>
+                  <p className="font-heading mt-1 text-2xl tracking-tight">
+                    {formatMoney(savePlan.weekCents, currency)}
+                  </p>
+                  <p className="text-muted-foreground mt-1 text-xs leading-5">
+                    Roughly {formatMoney(savePlan.dayCents, currency)} a day
+                  </p>
+                </div>
               </div>
             </div>
           )}
