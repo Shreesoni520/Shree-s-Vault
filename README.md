@@ -1,40 +1,149 @@
-# Hearth
+<p align="center">
+  <img src="public/shreevault-s.png" width="72" height="72" alt="ShreeVault" />
+</p>
 
-A desktop-only money desk and recipe box in the browser. Each person signs up, then keeps their own ledger, categories, charts, recipes, and grocery list.
+<h1 align="center">ShreeVault</h1>
 
-## What it does
+<p align="center">
+  <strong>Your private finance desk.</strong><br />
+  Sign in. Log the money. Cook from the same place.
+</p>
 
-- **Sign up / sign in** with username and password (same flow as [MyPlaylist](https://github.com/Shreesoni520/MyPlaylist))
-- **Ledger** — income vs spend, categories, monthly envelopes, search, CSV import and export
-- **Desk** — charts, leftover money, category bars, recent lines
-- **Recipe box** — save recipes, scale servings, tick ingredients
-- **Grocery list** — grouped by aisle, from ticked ingredients or typed by hand
-- **Desktop only** — phones and small screens see a “use a computer” page
+<p align="center">
+  <img alt="Next.js" src="https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=nextdotjs" />
+  <img alt="React" src="https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black" />
+  <img alt="Tailwind" src="https://img.shields.io/badge/Tailwind-v4-38BDF8?style=for-the-badge&logo=tailwindcss&logoColor=white" />
+  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-5-3178C6?style=for-the-badge&logo=typescript&logoColor=white" />
+  <img alt="Prisma" src="https://img.shields.io/badge/Prisma-SQLite-2D3748?style=for-the-badge&logo=prisma&logoColor=white" />
+</p>
 
-No PHP. The app is **Next.js + TypeScript** with a **SQLite** database via Prisma.
+---
 
-## Run locally
+## The idea
 
-You need Node.js 20+ (not XAMPP/PHP).
+Most money apps live on someone else's cloud, with someone else's ads. This one lives on **your desk**.
+
+You create a username. You pick a currency and what you actually earn. Then you log what comes in and what goes out — no invented transactions, no “sample month” that pretends to be you. Accounts, leftover money, recipes, and the grocery list sit in the same login.
+
+Same username, same password, same numbers — Chrome, Edge, another computer — as long as they hit this app.
+
+Built for one person who wants the books and the kitchen in one quiet place. Not a bank. Not a budget influencer dashboard.
+
+---
+
+## Features
+
+| | |
+| --- | --- |
+| **Your account** | Username + password. One name for the whole desk. Light and dark. |
+| **Desk** | Available money, accounts at a glance, leftover vs your goal, this month’s picture |
+| **Ledger** | Income, spend, envelopes, search, payees, CSV in and out |
+| **Accounts** | Everyday and savings, opening balances, statements, move money between them |
+| **Household bills** | Rent, light, water, internet — you type the figures |
+| **Recipe box** | Save recipes, scale servings, favourite, duplicate, send ingredients to grocery |
+| **Grocery list** | Aisle groups, tick off, merge, estimates if you want them |
+| **Yours only** | Your ledger is not mixed with anyone else’s. Local SQLite unless you point it elsewhere |
+
+---
+
+## Quick start
 
 ```bash
+git clone https://github.com/Shreesoni520/Shree-s-Vault.git
+cd Shree-s-Vault
 npm install
 npx prisma generate
 npx prisma db push
 npm run dev
 ```
 
-Then open [http://localhost:3000](http://localhost:3000) on a laptop or desktop.
+Copy `.env.example` to `.env` if you do not have one yet:
+
+```env
+DATABASE_URL="file:./dev.db"
+SESSION_SECRET="use-a-long-random-string"
+```
+
+Open [http://localhost:3000](http://localhost:3000), create a username, pick a currency, and start the desk.
 
 On Windows you can also double-click `start-server.bat`.
 
-## Public deploy
+| Script | What it does |
+| --- | --- |
+| `npm run dev` | Local development |
+| `npm run build` | Production build |
+| `npm start` | Serve the production build |
+| `npx prisma db push` | Create / update the SQLite tables |
+| `npm run lint` | ESLint |
 
-Set these environment variables:
+---
+
+## How it works
 
 ```
-DATABASE_URL="file:./dev.db"
-SESSION_SECRET="a-long-random-string"
+Sign up  →  currency, pay, leftover goal
+                │
+                ├─ Desk: available, accounts, month
+                ├─ Ledger: income, spend, envelopes, CSV
+                ├─ Accounts: everyday, savings, transfers
+                ├─ Recipes: scale, favourite, cook
+                └─ Grocery: aisles from the kitchen or by hand
 ```
 
-SQLite is fine for a first public version on a single server. For Vercel, switch `DATABASE_URL` to a hosted Postgres URL and change `provider` in `prisma/schema.prisma` to `postgresql`.
+- **Auth** is username + password with a signed cookie session. Passwords are salted hashes. A username can only be taken once.
+- **Money** is stored in cents. You pick the currency. Nothing is invented for you after onboarding.
+- **Data** lives in SQLite through Prisma (`prisma/schema.prisma`). The database file stays on the machine that runs the app — it is not committed to Git.
+- **Themes** follow the system or the toggle. The mark stays the same S; the circle flips with light / dark.
+
+```text
+Shree-s-Vault/
+├── prisma/schema.prisma
+├── public/                 # mark, favicons
+├── src/app/                # pages + API
+├── src/components/desk/    # Desk, Ledger, Accounts, Recipes, Grocery, Settings
+└── src/lib/                # money, auth, sessions
+```
+
+---
+
+## Stack
+
+- [Next.js 16](https://nextjs.org) App Router + Turbopack
+- [React 19](https://react.dev) + TypeScript
+- [Tailwind CSS v4](https://tailwindcss.com)
+- [Prisma](https://www.prisma.io) 6 + SQLite
+- [Base UI](https://base-ui.com)
+- [Recharts](https://recharts.org) for the desk
+- [Lucide](https://lucide.dev) icons
+- [next-themes](https://github.com/pacocoursey/next-themes)
+
+Need Node.js 20+. This is not a PHP app.
+
+For a public host, keep `SESSION_SECRET` long and random. SQLite is enough on a single server. On Vercel, point `DATABASE_URL` at hosted Postgres and set `provider` in `prisma/schema.prisma` to `postgresql`.
+
+---
+
+## Also by Shree
+
+| Project | What it is | Link |
+| --- | --- | --- |
+| **Playlist** | Personal music room — YouTube tracks & playlists | [github.com/Shreesoni520/MyPlaylist](https://github.com/Shreesoni520/MyPlaylist) |
+| **Extract** | Private file sharing with timed access | [github.com/Shreesoni520/Extract](https://github.com/Shreesoni520/Extract) |
+| **Portfolio** | Personal site — dark room, ice-blue, motion | [github.com/Shreesoni520/MyPortfolio](https://github.com/Shreesoni520/MyPortfolio) |
+
+---
+
+## Author
+
+**Krishna Soni**
+
+- **GitHub:** [Shreesoni520](https://github.com/Shreesoni520)
+- **Email:** [shreesoni520@gmail.com](mailto:shreesoni520@gmail.com)
+
+---
+
+## License
+
+Private finance desk. Built by **Krishna Soni**.
+
+Your numbers stay on your machine unless you deploy it. Please don’t ship this as your own product.
