@@ -2,12 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Download, Plus, Printer, Trash2 } from "lucide-react";
+import { Plus, Printer, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { api, downloadExport, openPrintSheet, type GroceryItem } from "@/lib/client";
+import { api, openPrintSheet, type GroceryItem } from "@/lib/client";
 import { centsToPounds, poundsToCents } from "@/lib/money";
 import { useMoney } from "@/hooks/use-money";
 
@@ -107,39 +107,15 @@ export function GroceryView() {
           <p className="text-muted-foreground text-sm">Monthly buys · tick when you get them</p>
           <h1 className="font-heading mt-1 text-4xl tracking-tight">Grocery</h1>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="border-border dark:border-white/20"
-            onClick={() => openPrintSheet("grocery")}
-            disabled={items.length === 0}
-          >
-            <Printer /> Print / PDF
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="border-border dark:border-white/20"
-            onClick={() => {
-              void downloadExport("grocery")
-                .then(() => toast.success("Grocery list downloaded"))
-                .catch((error) => toast.error(error instanceof Error ? error.message : "Could not export"));
-            }}
-            disabled={items.length === 0}
-          >
-            <Download /> CSV
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="border-border dark:border-white/20"
-            onClick={() => void resetMonth()}
-            disabled={!items.some((item) => item.done)}
-          >
-            Clear ticked
-          </Button>
-        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          className="border-border dark:border-white/20"
+          onClick={() => openPrintSheet("grocery")}
+          disabled={items.length === 0}
+        >
+          <Printer /> Print
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -220,6 +196,15 @@ export function GroceryView() {
               <Plus /> Add
             </Button>
           </form>
+          {items.some((item) => item.done) && (
+            <button
+              type="button"
+              className="text-muted-foreground hover:text-foreground mt-3 self-start text-xs"
+              onClick={() => void resetMonth()}
+            >
+              Remove bought items
+            </button>
+          )}
         </CardContent>
       </Card>
     </div>

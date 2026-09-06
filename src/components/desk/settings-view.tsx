@@ -1,14 +1,14 @@
 "use client";
 
 import { useRef, useState, type ReactNode } from "react";
-import { Camera, Download, Printer } from "lucide-react";
+import { Camera, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { UserAvatar } from "@/components/user-avatar";
-import { downloadExport, openPrintSheet } from "@/lib/client";
+import { openPrintSheet } from "@/lib/client";
 import { useAuth } from "@/context/auth-context";
 import { useMoney } from "@/hooks/use-money";
 import { CURRENCIES } from "@/lib/currency";
@@ -168,49 +168,19 @@ export function SettingsView() {
       </section>
 
       <section className="desk-in">
-        <p className="text-muted-foreground mb-1 text-xs tracking-[0.18em] uppercase">Export</p>
+        <p className="text-muted-foreground mb-1 text-xs tracking-[0.18em] uppercase">Print</p>
         <p className="text-muted-foreground mb-3 text-sm">
-          Print / PDF is A4 for the printer. CSV is for Excel and Import.
+          A4 page for the printer, or save as PDF.
         </p>
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" onClick={() => openPrintSheet("ledger")}>
-            <Printer /> Ledger PDF
+            <Printer /> Ledger
           </Button>
           <Button variant="outline" onClick={() => openPrintSheet("grocery")}>
-            <Printer /> Grocery PDF
+            <Printer /> Grocery
           </Button>
           <Button variant="outline" onClick={() => openPrintSheet("accounts")}>
-            <Printer /> Accounts PDF
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => {
-              void downloadExport("ledger")
-                .then(() => toast.success("Ledger downloaded"))
-                .catch((error) => toast.error(error instanceof Error ? error.message : "Could not export"));
-            }}
-          >
-            <Download /> Ledger CSV
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => {
-              void downloadExport("grocery")
-                .then(() => toast.success("Grocery downloaded"))
-                .catch((error) => toast.error(error instanceof Error ? error.message : "Could not export"));
-            }}
-          >
-            <Download /> Grocery CSV
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => {
-              void downloadExport("accounts")
-                .then(() => toast.success("Accounts downloaded"))
-                .catch((error) => toast.error(error instanceof Error ? error.message : "Could not export"));
-            }}
-          >
-            <Download /> Accounts CSV
+            <Printer /> Accounts
           </Button>
         </div>
       </section>

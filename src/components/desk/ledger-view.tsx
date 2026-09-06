@@ -2,17 +2,16 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Copy, Download, Plus, Printer, Repeat, Search, Trash2, Upload } from "lucide-react";
+import { Copy, Plus, Printer, Repeat, Search, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input, Textarea } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { KindPills, Select } from "@/components/ui/select";
 import { MonthNav } from "@/components/desk/month-nav";
-import { api, downloadExport, openPrintSheet, type Account, type Budget, type Category, type Transaction } from "@/lib/client";
-import { SAMPLE_CSV } from "@/lib/csv";
+import { api, openPrintSheet, type Account, type Budget, type Category, type Transaction } from "@/lib/client";
 import { CATEGORY_COLORS } from "@/lib/defaults";
 import { useDebounced } from "@/hooks/use-debounced";
 import { useMoney } from "@/hooks/use-money";
@@ -33,10 +32,7 @@ export function LedgerView() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [open, setOpen] = useState(false);
-  const [importOpen, setImportOpen] = useState(false);
-  const [exportOpen, setExportOpen] = useState(false);
-  const [exporting, setExporting] = useState(false);
-  const [csvText, setCsvText] = useState(SAMPLE_CSV);
+  const [printOpen, setPrintOpen] = useState(false);
   const [editing, setEditing] = useState<Transaction | null>(null);
   const [budgetAmount, setBudgetAmount] = useState("");
   const [budgetCategory, setBudgetCategory] = useState("");
@@ -146,20 +142,6 @@ export function LedgerView() {
     }
   }
 
-  async function importCsv() {
-    try {
-      const data = await api<{ imported: number; skipped: number }>("/api/import", {
-        method: "POST",
-        body: JSON.stringify({ csv: csvText }),
-      });
-      toast.success(`Imported ${data.imported} rows${data.skipped ? `, skipped ${data.skipped}` : ""}`);
-      setImportOpen(false);
-      await load();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Could not import");
-    }
-  }
-
   async function applyRepeats() {
     try {
       const data = await api<{ posted: number }>(`/api/transactions/repeat?month=${month}`, { method: "POST" });
@@ -214,11 +196,8 @@ export function LedgerView() {
           <Button variant="outline" onClick={() => void applyRepeats()}>
             <Repeat /> Post repeats
           </Button>
-          <Button variant="outline" onClick={() => setImportOpen(true)}>
-            <Upload /> Import CSV
-          </Button>
-          <Button variant="outline" onClick={() => setExportOpen(true)}>
-            <Download /> Export
+          <Button variant="outline" onClick={() => setPrintOpen(true)}>
+            <Printer /> Print
           </Button>
           <Button
             onClick={() => {
@@ -280,7 +259,7 @@ export function LedgerView() {
           <CardContent className="flex flex-col gap-5">
             {transactions.length === 0 ? (
               <p className="text-muted-foreground py-8 text-center text-sm">
-                Nothing here yet. Add a line or import a CSV.
+                Nothing here yet. Add a line.
               </p>
             ) : (
               <>
@@ -435,126 +414,31 @@ export function LedgerView() {
         }}
       />
 
-      <Dialog open={exportOpen} onOpenChange={setExportOpen}>
+      <Dialog open={printOpen} onOpenChange={setPrintOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Export ledger</DialogTitle>
-            <DialogDescription>
-              Print or save an A4 PDF for the printer. CSV is for Excel and Import.
-            </DialogDescription>
+            <DialogTitle>Print ledger</DialogTitle>
+            <DialogDescription>A4 page for the printer, or save as PDF.</DialogDescription>
           </DialogHeader>
-          <div className="flex flex-col gap-3">
-            <div>
-              <p className="text-muted-foreground mb-2 text-xs tracking-[0.16em] uppercase">Print / PDF · A4</p>
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  onClick={() => {
-                    openPrintSheet("ledger", month);
-                    setExportOpen(false);
-                  }}
-                >
-                  <Printer /> This month
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    openPrintSheet("ledger", "all");
-                    setExportOpen(false);
-                  }}
-                >
-                  <Printer /> All months
-                </Button>
-              </div>
-            </div>
-            <div>
-              <p className="text-muted-foreground mb-2 text-xs tracking-[0.16em] uppercase">Spreadsheet · CSV</p>
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  variant="outline"
-                  disabled={exporting}
-                  onClick={() => {
-                    void (async () => {
-                      setExporting(true);
-                      try {
-                        await downloadExport("ledger", month);
-                        setExportOpen(false);
-                        toast.success("Downloaded this month");
-                      } catch (error) {
-                        toast.error(error instanceof Error ? error.message : "Could not export");
-                      } finally {
-                        setExporting(false);
-                      }
-                    })();
-                  }}
-                >
-                  <Download /> This month
-                </Button>
-                <Button
-                  variant="outline"
-                  disabled={exporting}
-                  onClick={() => {
-                    void (async () => {
-                      setExporting(true);
-                      try {
-                        await downloadExport("ledger");
-                        setExportOpen(false);
-                        toast.success("Downloaded every month");
-                      } catch (error) {
-                        toast.error(error instanceof Error ? error.message : "Could not export");
-                      } finally {
-                        setExporting(false);
-                      }
-                    })();
-                  }}
-                >
-                  <Download /> All months
-                </Button>
-              </div>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={importOpen} onOpenChange={setImportOpen}>
-        <DialogContent className="sm:max-w-xl">
-          <DialogHeader>
-            <DialogTitle>Import CSV</DialogTitle>
-            <DialogDescription>
-              Same shape as Export: date, amount, kind, category, merchant, note. Dates like 2026-09-01 or 01/09/2026.
-            </DialogDescription>
-          </DialogHeader>
-          <Textarea value={csvText} onChange={(event) => setCsvText(event.target.value)} className="min-h-56 font-mono text-xs" />
-          <label className="text-muted-foreground inline-flex cursor-pointer items-center gap-2 text-sm hover:text-foreground">
-            <Upload className="size-3.5" />
-            Choose a .csv file
-            <input
-              type="file"
-              accept=".csv,text/csv"
-              className="sr-only"
-              onChange={async (event) => {
-                const file = event.target.files?.[0];
-                if (!file) return;
-                setCsvText(await file.text());
+          <div className="flex flex-wrap gap-2">
+            <Button
+              onClick={() => {
+                openPrintSheet("ledger", month);
+                setPrintOpen(false);
               }}
-            />
-          </label>
-          <DialogFooter>
+            >
+              <Printer /> This month
+            </Button>
             <Button
               variant="outline"
               onClick={() => {
-                const blob = new Blob([SAMPLE_CSV], { type: "text/csv" });
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement("a");
-                link.href = url;
-                link.download = "shreevault-sample.csv";
-                link.click();
-                URL.revokeObjectURL(url);
+                openPrintSheet("ledger", "all");
+                setPrintOpen(false);
               }}
             >
-              Download sample
+              <Printer /> All months
             </Button>
-            <Button onClick={() => void importCsv()}>Import</Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

@@ -79,11 +79,11 @@ function PrintStudio() {
   }, [loading, error]);
 
   return (
-    <div className="print-studio min-h-svh bg-neutral-200 text-black">
-      <div className="print-chrome mx-auto flex w-[210mm] max-w-full flex-wrap items-center justify-between gap-3 px-4 py-4">
+    <div className="print-studio min-h-svh bg-stone-200 text-stone-900">
+      <div className="print-chrome mx-auto flex w-[210mm] max-w-full flex-wrap items-center justify-between gap-3 px-4 py-5">
         <div>
-          <p className="text-sm font-medium">A4 print / PDF</p>
-          <p className="text-neutral-600 text-xs">
+          <p className="text-sm font-medium tracking-tight">A4 print / PDF</p>
+          <p className="text-stone-600 text-xs">
             Pick your printer, or Save as PDF. Short lists stay small at the top of the page.
           </p>
         </div>

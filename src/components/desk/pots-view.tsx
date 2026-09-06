@@ -2,14 +2,14 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Download, PiggyBank, Plus, Printer, Trash2 } from "lucide-react";
+import { PiggyBank, Plus, Printer, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { AccountSheet } from "@/components/desk/account-sheet";
-import { api, downloadExport, openPrintSheet, type Account, type Goal } from "@/lib/client";
+import { api, openPrintSheet, type Account, type Goal } from "@/lib/client";
 import { centsToPounds, poundsToCents } from "@/lib/money";
 import { useMoney } from "@/hooks/use-money";
 
@@ -121,18 +121,7 @@ export function PotsView() {
         </div>
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" size="sm" onClick={() => openPrintSheet("accounts")}>
-            <Printer /> Print / PDF
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              void downloadExport("accounts")
-                .then(() => toast.success("Accounts downloaded"))
-                .catch((error) => toast.error(error instanceof Error ? error.message : "Could not export"));
-            }}
-          >
-            <Download /> CSV
+            <Printer /> Print
           </Button>
         </div>
       </div>
