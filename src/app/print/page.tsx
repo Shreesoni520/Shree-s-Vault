@@ -72,19 +72,13 @@ function PrintStudio() {
     })();
   }, [ready, user, kind, month]);
 
-  useEffect(() => {
-    if (loading || error) return;
-    const timer = window.setTimeout(() => window.print(), 700);
-    return () => window.clearTimeout(timer);
-  }, [loading, error]);
-
   return (
     <div className="print-studio min-h-svh bg-stone-200 text-stone-900">
       <div className="print-chrome mx-auto flex w-[210mm] max-w-full flex-wrap items-center justify-between gap-3 px-4 py-5">
         <div>
           <p className="text-sm font-medium tracking-tight">Ready to print</p>
           <p className="text-stone-600 text-xs">
-            Choose your printer, or Save as PDF. Turn off headers and footers in the print box if you see the website URL.
+            This page stays open. Tap Print / PDF when you want the printer box. Turn off headers and footers if you see the website URL.
           </p>
         </div>
         <div className="flex gap-2">
