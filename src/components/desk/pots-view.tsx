@@ -2,14 +2,14 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Download, PiggyBank, Plus, Trash2 } from "lucide-react";
+import { Download, PiggyBank, Plus, Printer, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { AccountSheet } from "@/components/desk/account-sheet";
-import { api, downloadExport, type Account, type Goal } from "@/lib/client";
+import { api, downloadExport, openPrintSheet, type Account, type Goal } from "@/lib/client";
 import { centsToPounds, poundsToCents } from "@/lib/money";
 import { useMoney } from "@/hooks/use-money";
 
@@ -119,17 +119,22 @@ export function PotsView() {
           <p className="text-muted-foreground text-sm">Cash across accounts · {money(cash)} available</p>
           <h1 className="font-heading mt-1 text-4xl tracking-tight">Accounts</h1>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => {
-            void downloadExport("accounts")
-              .then(() => toast.success("Accounts downloaded"))
-              .catch((error) => toast.error(error instanceof Error ? error.message : "Could not export"));
-          }}
-        >
-          <Download /> Export
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" size="sm" onClick={() => openPrintSheet("accounts")}>
+            <Printer /> Print / PDF
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              void downloadExport("accounts")
+                .then(() => toast.success("Accounts downloaded"))
+                .catch((error) => toast.error(error instanceof Error ? error.message : "Could not export"));
+            }}
+          >
+            <Download /> CSV
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">

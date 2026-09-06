@@ -7,7 +7,15 @@ export async function readError(response: Response) {
   }
 }
 
-export async function downloadExport(kind: "ledger" | "grocery" | "accounts", month?: string) {
+export type ExportKind = "ledger" | "grocery" | "accounts";
+
+export function openPrintSheet(kind: ExportKind, month?: string) {
+  const query = new URLSearchParams({ kind });
+  if (month) query.set("month", month);
+  window.open(`/print?${query}`, "_blank", "noopener,noreferrer");
+}
+
+export async function downloadExport(kind: ExportKind, month?: string) {
   const query = new URLSearchParams({ kind });
   if (month) query.set("month", month);
   const response = await fetch(`/api/export?${query}`, { credentials: "include" });

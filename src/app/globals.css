@@ -544,3 +544,110 @@ nextjs-portal {
     transform: none;
   }
 }
+
+.print-sheet {
+  padding: 14mm 14mm 12mm;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+}
+
+.print-sheet-roomy .print-row {
+  padding: 0.45rem 0;
+}
+
+.print-sheet-tight .print-row {
+  padding: 0.22rem 0;
+  font-size: 11px;
+}
+
+.print-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.print-list-split {
+  columns: 2;
+  column-gap: 16px;
+}
+
+.print-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  break-inside: avoid;
+  border-bottom: 1px solid #d4d4d4;
+}
+
+.print-row-done {
+  color: #525252;
+}
+
+.print-box {
+  display: inline-flex;
+  width: 0.85rem;
+  height: 0.85rem;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  border: 1.4px solid #111;
+  font-size: 9px;
+  line-height: 1;
+}
+
+.print-box-done {
+  background: #111;
+  color: #fff;
+}
+
+.print-ledger-tiny table {
+  font-size: 10px;
+}
+
+.print-ledger-tiny td {
+  padding-top: 0.15rem;
+  padding-bottom: 0.15rem;
+}
+
+@page {
+  size: A4;
+  margin: 10mm;
+}
+
+@media print {
+  html,
+  body {
+    background: #fff !important;
+    color: #111 !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .print-studio {
+    background: #fff !important;
+    min-height: 0 !important;
+  }
+
+  .print-chrome,
+  .print-preview {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .print-chrome,
+  nextjs-portal,
+  [data-sonner-toaster] {
+    display: none !important;
+  }
+
+  .print-sheet {
+    width: 100% !important;
+    max-width: none !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

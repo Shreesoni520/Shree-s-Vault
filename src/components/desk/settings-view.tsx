@@ -1,14 +1,14 @@
 "use client";
 
 import { useRef, useState, type ReactNode } from "react";
-import { Camera, Download } from "lucide-react";
+import { Camera, Download, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { UserAvatar } from "@/components/user-avatar";
-import { downloadExport } from "@/lib/client";
+import { downloadExport, openPrintSheet } from "@/lib/client";
 import { useAuth } from "@/context/auth-context";
 import { useMoney } from "@/hooks/use-money";
 import { CURRENCIES } from "@/lib/currency";
@@ -169,8 +169,19 @@ export function SettingsView() {
 
       <section className="desk-in">
         <p className="text-muted-foreground mb-1 text-xs tracking-[0.18em] uppercase">Export</p>
-        <p className="text-muted-foreground mb-3 text-sm">CSV files Excel can open. Ledger matches Import.</p>
+        <p className="text-muted-foreground mb-3 text-sm">
+          Print / PDF is A4 for the printer. CSV is for Excel and Import.
+        </p>
         <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={() => openPrintSheet("ledger")}>
+            <Printer /> Ledger PDF
+          </Button>
+          <Button variant="outline" onClick={() => openPrintSheet("grocery")}>
+            <Printer /> Grocery PDF
+          </Button>
+          <Button variant="outline" onClick={() => openPrintSheet("accounts")}>
+            <Printer /> Accounts PDF
+          </Button>
           <Button
             variant="outline"
             onClick={() => {
@@ -179,7 +190,7 @@ export function SettingsView() {
                 .catch((error) => toast.error(error instanceof Error ? error.message : "Could not export"));
             }}
           >
-            <Download /> Ledger
+            <Download /> Ledger CSV
           </Button>
           <Button
             variant="outline"
@@ -189,7 +200,7 @@ export function SettingsView() {
                 .catch((error) => toast.error(error instanceof Error ? error.message : "Could not export"));
             }}
           >
-            <Download /> Grocery
+            <Download /> Grocery CSV
           </Button>
           <Button
             variant="outline"
@@ -199,7 +210,7 @@ export function SettingsView() {
                 .catch((error) => toast.error(error instanceof Error ? error.message : "Could not export"));
             }}
           >
-            <Download /> Accounts
+            <Download /> Accounts CSV
           </Button>
         </div>
       </section>

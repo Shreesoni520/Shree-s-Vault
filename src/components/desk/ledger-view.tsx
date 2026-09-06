@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Copy, Download, Plus, Repeat, Search, Trash2, Upload } from "lucide-react";
+import { Copy, Download, Plus, Printer, Repeat, Search, Trash2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { KindPills, Select } from "@/components/ui/select";
 import { MonthNav } from "@/components/desk/month-nav";
-import { api, downloadExport, type Account, type Budget, type Category, type Transaction } from "@/lib/client";
+import { api, downloadExport, openPrintSheet, type Account, type Budget, type Category, type Transaction } from "@/lib/client";
 import { SAMPLE_CSV } from "@/lib/csv";
 import { CATEGORY_COLORS } from "@/lib/defaults";
 import { useDebounced } from "@/hooks/use-debounced";
@@ -440,50 +440,78 @@ export function LedgerView() {
           <DialogHeader>
             <DialogTitle>Export ledger</DialogTitle>
             <DialogDescription>
-              Downloads a CSV Excel can open. Same columns as Import, plus account and whether it repeats each month.
+              Print or save an A4 PDF for the printer. CSV is for Excel and Import.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="sm:justify-between">
-            <Button
-              variant="outline"
-              disabled={exporting}
-              onClick={() => {
-                void (async () => {
-                  setExporting(true);
-                  try {
-                    await downloadExport("ledger", month);
+          <div className="flex flex-col gap-3">
+            <div>
+              <p className="text-muted-foreground mb-2 text-xs tracking-[0.16em] uppercase">Print / PDF · A4</p>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  onClick={() => {
+                    openPrintSheet("ledger", month);
                     setExportOpen(false);
-                    toast.success("Downloaded this month");
-                  } catch (error) {
-                    toast.error(error instanceof Error ? error.message : "Could not export");
-                  } finally {
-                    setExporting(false);
-                  }
-                })();
-              }}
-            >
-              This month
-            </Button>
-            <Button
-              disabled={exporting}
-              onClick={() => {
-                void (async () => {
-                  setExporting(true);
-                  try {
-                    await downloadExport("ledger");
+                  }}
+                >
+                  <Printer /> This month
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    openPrintSheet("ledger", "all");
                     setExportOpen(false);
-                    toast.success("Downloaded every month");
-                  } catch (error) {
-                    toast.error(error instanceof Error ? error.message : "Could not export");
-                  } finally {
-                    setExporting(false);
-                  }
-                })();
-              }}
-            >
-              All months
-            </Button>
-          </DialogFooter>
+                  }}
+                >
+                  <Printer /> All months
+                </Button>
+              </div>
+            </div>
+            <div>
+              <p className="text-muted-foreground mb-2 text-xs tracking-[0.16em] uppercase">Spreadsheet · CSV</p>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant="outline"
+                  disabled={exporting}
+                  onClick={() => {
+                    void (async () => {
+                      setExporting(true);
+                      try {
+                        await downloadExport("ledger", month);
+                        setExportOpen(false);
+                        toast.success("Downloaded this month");
+                      } catch (error) {
+                        toast.error(error instanceof Error ? error.message : "Could not export");
+                      } finally {
+                        setExporting(false);
+                      }
+                    })();
+                  }}
+                >
+                  <Download /> This month
+                </Button>
+                <Button
+                  variant="outline"
+                  disabled={exporting}
+                  onClick={() => {
+                    void (async () => {
+                      setExporting(true);
+                      try {
+                        await downloadExport("ledger");
+                        setExportOpen(false);
+                        toast.success("Downloaded every month");
+                      } catch (error) {
+                        toast.error(error instanceof Error ? error.message : "Could not export");
+                      } finally {
+                        setExporting(false);
+                      }
+                    })();
+                  }}
+                >
+                  <Download /> All months
+                </Button>
+              </div>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
 

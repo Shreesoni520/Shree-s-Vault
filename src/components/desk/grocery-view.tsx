@@ -2,12 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Download, Plus, Trash2 } from "lucide-react";
+import { Download, Plus, Printer, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { api, downloadExport, type GroceryItem } from "@/lib/client";
+import { api, downloadExport, openPrintSheet, type GroceryItem } from "@/lib/client";
 import { centsToPounds, poundsToCents } from "@/lib/money";
 import { useMoney } from "@/hooks/use-money";
 
@@ -112,6 +112,15 @@ export function GroceryView() {
             variant="outline"
             size="sm"
             className="border-border dark:border-white/20"
+            onClick={() => openPrintSheet("grocery")}
+            disabled={items.length === 0}
+          >
+            <Printer /> Print / PDF
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="border-border dark:border-white/20"
             onClick={() => {
               void downloadExport("grocery")
                 .then(() => toast.success("Grocery list downloaded"))
@@ -119,7 +128,7 @@ export function GroceryView() {
             }}
             disabled={items.length === 0}
           >
-            <Download /> Export
+            <Download /> CSV
           </Button>
           <Button
             variant="outline"
